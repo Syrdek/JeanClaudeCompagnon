@@ -1,0 +1,11 @@
+kokoro-onnx
+onnxruntime
+soundfile
+sounddevice
+pynput
+pillow
+mss
+easyocr
+lingua-language-detector
+argostranslate
+PySide6
