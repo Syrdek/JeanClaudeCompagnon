@@ -12,7 +12,7 @@ class AreaSelectionOverlay(QWidget):
 
     Implement on_cancel and on_accept to handle cancellation and area selection..
     """
-    # Start and end points of dragging area.
+    # Start and end points of dragging area (widget logical coordinates).
     start: QPoint
     end: QPoint
 
@@ -60,6 +60,13 @@ class AreaSelectionOverlay(QWidget):
         :param height: The height of the selection.
         """
 
+    def on_start_dragging(self, x: int, y: int):
+        """
+        Called when selection starts.
+        :param x: The x position of the selection.
+        :param y: The y position of the selection.
+        """
+
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """
         Starts selection.
@@ -70,6 +77,9 @@ class AreaSelectionOverlay(QWidget):
             self.end = self.start
             self.selecting = True
             self.update()
+
+            # Triggers event
+            self.on_start_dragging(event.x(), event.y())
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         """
