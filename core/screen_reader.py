@@ -7,6 +7,7 @@ from services.screener import Screener
 from services.speaker import TextReader
 
 from services.translator import Translator
+from ui.processing_bridge import ProcessingOverlayBridge
 
 logger = logging.getLogger("screen_reader")
 
@@ -23,7 +24,7 @@ class ScreenReader(object):
     :param translator: Language translator.
     """
 
-    def __init__(self, screener: Screener, speaker: TextReader, ocr: Ocr, translator: Translator):
+    def __init__(self, screener: Screener, speaker: TextReader, ocr: Ocr, translator: Translator, overlay: ProcessingOverlayBridge):
         """
         Construct a ScreenReader.
 
@@ -32,6 +33,7 @@ class ScreenReader(object):
         :param ocr: Optical character recognition engine.
         :param translator: Language translator.
         """
+        self.overlay = overlay
         self.translator = translator
         self.screener = screener
         self.speaker = speaker
@@ -45,17 +47,24 @@ class ScreenReader(object):
         :param from_point: Top-left corner of the region to capture.
         :param to_point: Bottom-right corner of the region to capture.
         """
+        self.overlay.wait()
+
         logger.info("Reading screen...")
         img = self.screener.screenshot(from_point, to_point)
         img.save("screenshot.png")
         logger.info("Extracting text...")
         texts = self.ocr.read(img)
         logger.info(f"Text extracted : {texts}")
+
         for box, text in texts:
             logger.info(f"box: {box}, text: {text}")
+            self.overlay.load()
             text = self.translator.to_french(text)
             logger.info(text)
+            self.overlay.play()
             self.speaker.read(text, wait=True)
+
+        self.overlay.close()
         logger.info(f"Finished !")
 
     def read_screen(self, from_point: Tuple[int, int], to_point: Tuple[int, int]) -> NoReturn:

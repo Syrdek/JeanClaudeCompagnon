@@ -8,4 +8,5 @@ mss
 easyocr
 lingua-language-detector
 argostranslate
+omnivoice
 PySide6

@@ -3,7 +3,7 @@ from pathlib import Path
 import os
 from typing import NoReturn
 
-ARGOS_DIR = f"{os.getcwd()}/argos"
+ARGOS_DIR = f"{os.getcwd()}/models/argos"
 os.makedirs(ARGOS_DIR, exist_ok=True)
 os.environ["ARGOS_PACKAGES_DIR"] = ARGOS_DIR
 

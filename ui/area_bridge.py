@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple
+from typing import Tuple, Literal
 
 from PySide6.QtCore import QObject
 from PySide6.QtCore import Signal
@@ -8,7 +8,7 @@ from core.screen_reader import ScreenReader
 from input.hook import InputHook
 from ui.area_overlay import AreaSelectionOverlay
 
-logger = logging.getLogger("bridge")
+logger = logging.getLogger("bridge.area")
 
 class AreaSelectionOverlayBridge(QObject):
     """

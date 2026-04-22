@@ -18,7 +18,7 @@ class Ocr(object):
 
         The reader uses locally stored models and does not download them.
         """
-        self.ocr = easyocr.Reader(lang_list=["fr", "en"], model_storage_directory="easy_ocr", download_enabled=False)
+        self.ocr = easyocr.Reader(lang_list=["fr", "en"], model_storage_directory="models/easy_ocr", download_enabled=False)
 
     def read(self, img: Any, **kwargs) -> Any:
         """

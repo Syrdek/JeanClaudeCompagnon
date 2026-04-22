@@ -10,7 +10,8 @@ from services.screener import Screener
 from services.speaker import TextReader
 
 from services.translator import Translator
-from ui.bridge import AreaSelectionOverlayBridge
+from ui.area_bridge import AreaSelectionOverlayBridge
+from ui.processing_bridge import ProcessingOverlayBridge
 
 logger = logging.getLogger("main")
 
@@ -31,11 +32,12 @@ def main():
     hook = InputHook()
     ocr = Ocr()
 
-    reader = ScreenReader(screener, speaker, ocr, translator)
-    bridge = AreaSelectionOverlayBridge(reader, hook)
+    processing_bridge = ProcessingOverlayBridge()
+    reader = ScreenReader(screener, speaker, ocr, translator, processing_bridge)
+    area_bridge = AreaSelectionOverlayBridge(reader, hook)
 
     screen_listener = CombinationListener("ctrl+f1", strict=True)
-    screen_listener.on_combination_typed = bridge.show_overlay
+    screen_listener.on_combination_typed = area_bridge.show_overlay
 
     hook.listeners.append(screen_listener)
     logging.info("Ready !")

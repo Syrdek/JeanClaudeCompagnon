@@ -181,9 +181,10 @@ cython_debug/
 .cursorindexingignore
 
 screenshot.png
-argos
-easy_ocr
-kokoro
+models/argos
+models/easy_ocr
+models/kokoro
+models
 tests
 
 .idea
