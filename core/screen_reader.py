@@ -1,4 +1,5 @@
 import logging
+import os.path
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Tuple, NoReturn
 
@@ -51,18 +52,19 @@ class ScreenReader(object):
 
         logger.info("Reading screen...")
         img = self.screener.screenshot(from_point, to_point)
-        img.save("screenshot.png")
+        if os.path.isdir("tests"):
+            img.save("tests/screenshot.png")
+
         logger.info("Extracting text...")
         texts = self.ocr.read(img)
-        logger.info(f"Text extracted : {texts}")
 
         for box, text in texts:
-            logger.info(f"box: {box}, text: {text}")
-            self.overlay.load()
+            logger.info(f"Text extracted : {text}")
             text = self.translator.to_french(text)
             logger.info(text)
+            audio, rate = self.speaker.generate(text)
             self.overlay.play()
-            self.speaker.read(text, wait=True)
+            self.speaker.play(samples=audio, rate=rate, wait=True)
 
         self.overlay.close()
         logger.info(f"Finished !")

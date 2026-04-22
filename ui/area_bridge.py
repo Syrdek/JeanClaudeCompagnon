@@ -29,9 +29,9 @@ class AreaSelectionOverlayBridge(QObject):
         self.hook = hook
         self.__start_pos = None
         self.__overlay = None
-        self.__open_signal.connect(self.__qt_show)
+        self.__open_signal.connect(self.show)
 
-    def __qt_show(self) -> None:
+    def show(self, *args) -> None:
         """
         Displays the Qt area selection overlay.
         """

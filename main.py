@@ -12,6 +12,7 @@ from services.speaker import TextReader
 from services.translator import Translator
 from ui.area_bridge import AreaSelectionOverlayBridge
 from ui.processing_bridge import ProcessingOverlayBridge
+from ui.tray import TrayApp
 
 logger = logging.getLogger("main")
 
@@ -23,13 +24,23 @@ def main():
     logging.basicConfig(level=logging.INFO)
     logging.getLogger("argostranslate.utils").setLevel(logging.WARNING)
 
+    logger.info("Creating application")
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
 
+    logger.info("Creating screenshot maker")
     screener = Screener()
+
+    logger.info("Creating translator")
     translator = Translator()
+
+    logger.info("Creating text to speech reader")
     speaker = TextReader()
+
+    logger.info("Creating input hook")
     hook = InputHook()
+
+    logger.info("Creating ocr")
     ocr = Ocr()
 
     processing_bridge = ProcessingOverlayBridge()
@@ -40,8 +51,11 @@ def main():
     screen_listener.on_combination_typed = area_bridge.show_overlay
 
     hook.listeners.append(screen_listener)
-    logging.info("Ready !")
     hook.start()
+
+    logging.info("Ready !")
+
+    tray_app = TrayApp(app=app, read_callback=area_bridge.show)
 
     sys.exit(app.exec())
 

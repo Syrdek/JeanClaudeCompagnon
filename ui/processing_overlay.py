@@ -47,16 +47,29 @@ class ProcessingOverlay(QWidget):
         self._timer.timeout.connect(self._on_tick)
         self._timer.start(16)
 
+        self.bar_width = 6
+        self.bar_gap = 2
+
+        self.paintAnimation = None
         self.set_waiting()
 
     def set_loading(self):
-        self.paintEvent = self.__paint_comet
+        self.paintAnimation = self.__paint_comet
 
     def set_waiting(self):
-        self.paintEvent = self.__paint_comet
+        self.paintAnimation = self.__paint_comet
 
     def set_playing(self):
-        self.paintEvent = self.__paint_multi_sonogram
+        self.paintAnimation = self.__paint_multi_sonogram
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 100))
+
+        if callable(self.paintAnimation):
+            self.paintAnimation(event)
 
     def _on_tick(self) -> None:
         """
@@ -77,11 +90,7 @@ class ProcessingOverlay(QWidget):
         width = self.width()
         height = self.height()
 
-        painter.fillRect(self.rect(), QColor(0, 0, 0, 200))
-
-        bar_width = 6
-        bar_gap = 2
-        step = bar_width + bar_gap
+        step = self.bar_width + self.bar_gap
         bar_count = max(1, width // step)
 
         base_color = QColor(0, 140, 255, 220)
@@ -89,7 +98,7 @@ class ProcessingOverlay(QWidget):
 
         for index in range(bar_count):
             x = index * step
-            center_x = x + bar_width / 2
+            center_x = x + self.bar_width / 2
             xn = index / max(1, bar_count - 1)
 
             wave1 = 0.5 + 0.5 * math.sin((xn * 10.0) + self._phase * 2 * math.pi * 1.7)
@@ -113,9 +122,9 @@ class ProcessingOverlay(QWidget):
             a = int(base_color.alpha() * (1 - color_mix) + peak_color.alpha() * color_mix)
 
             painter.fillRect(
-                int(center_x - bar_width / 2),
+                int(center_x - self.bar_width / 2),
                 y,
-                bar_width,
+                self.bar_width,
                 int(bar_height),
                 QColor(r, g, b, a),
             )
@@ -132,11 +141,7 @@ class ProcessingOverlay(QWidget):
         width = self.width()
         height = self.height()
 
-        painter.fillRect(self.rect(), QColor(0, 0, 0, 200))
-
-        bar_width = 6
-        bar_gap = 2
-        step = bar_width + bar_gap
+        step = self.bar_width + self.bar_gap
         bar_count = max(1, width // step)
         center = (bar_count - 1) / 2
 
@@ -165,7 +170,7 @@ class ProcessingOverlay(QWidget):
             painter.fillRect(
                 x,
                 y,
-                bar_width,
+                self.bar_width,
                 int(bar_height),
                 QColor(color.red(), color.green(), color.blue(), alpha),
             )
@@ -182,11 +187,7 @@ class ProcessingOverlay(QWidget):
         width = self.width()
         height = self.height()
 
-        painter.fillRect(self.rect(), QColor(0, 0, 0, 200))
-
-        bar_width = 6
-        bar_gap = 2
-        step = bar_width + bar_gap
+        step = self.bar_width + self.bar_gap
         bar_count = max(1, width // step)
 
         head_pos = self._phase * (bar_count + 10) - 5
@@ -217,7 +218,7 @@ class ProcessingOverlay(QWidget):
             painter.fillRect(
                 x,
                 y,
-                bar_width,
+                self.bar_width,
                 int(bar_height),
                 QColor(0, 120, blue, alpha),
             )
