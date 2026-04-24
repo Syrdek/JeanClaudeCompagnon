@@ -188,3 +188,4 @@ models
 tests
 
 .idea
+/config.json

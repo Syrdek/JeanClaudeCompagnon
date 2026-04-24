@@ -1,37 +1,43 @@
-
-from pathlib import Path
+import abc
 import os
-from typing import NoReturn
-
-ARGOS_DIR = f"{os.getcwd()}/models/argos"
-os.makedirs(ARGOS_DIR, exist_ok=True)
-os.environ["ARGOS_PACKAGES_DIR"] = ARGOS_DIR
 
 import logging
-from lingua import Language, LanguageDetectorBuilder
 
-import argostranslate.translate
+from services.ollama_llm import OllamaClient
 
 
-class Translator(object):
+class Translator(object, metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def translate(self, text: str) -> str:
+        pass
+
+
+class ArgosTranslator(object):
     """
-    Detects the language of input text and translates English content to French
-    using Argos Translate and Lingua language detection.
+    Translates text using argos translation.s
     """
 
-    def __init__(self):
+    def __init__(self,
+                 target_language: str = "fra",
+                 source_language: str = "eng",
+                 model_dir: str = "models/argos") -> None:
         """
         Construct a Translator with a French/English language detector.
         """
-        self.detector = LanguageDetectorBuilder.from_languages(
-            Language.ENGLISH,
-            Language.FRENCH,
-        ).build()
+        self.source_language = source_language
+        self.target_language = target_language
 
-    def download_languages(self) -> NoReturn:
+        argos_dir = f"{os.getcwd()}/{model_dir}"
+        os.environ["ARGOS_PACKAGES_DIR"] = argos_dir
+        if not os.path.isdir(argos_dir):
+            os.makedirs(argos_dir, exist_ok=True)
+            import argostranslate.translate
+
+    def download_languages(self) -> None:
         """
         Download and install the English-to-French Argos Translate translation package.
         """
+        import argostranslate.translate
         argostranslate.package.update_package_index()
         available_packages = argostranslate.package.get_available_packages()
 
@@ -43,32 +49,48 @@ class Translator(object):
         download_path = package_to_install.download()
         argostranslate.package.install_from_path(download_path)
 
-    def to_french(self, text: str) -> str:
+    def translate(self, text: str) -> str:
         """
-        Translate the given text to French if it is detected as English.
-
-        If the language cannot be determined or is already French,
-        the original text is returned unchanged.
+        Translate the given text.
 
         :param text: The text to potentially translate.
-        :return: The French-translated text, or the original text if no translation is needed.
+        :return: The French-translated text.
         """
-        lang = self.detector.detect_language_of(text)
+        import argostranslate.translate
+        return argostranslate.translate.translate(text, "en", "fr")
 
-        if lang is None:
-            return text
 
-        if lang == Language.FRENCH:
-            return text
+class LlmTranslator(Translator):
+    """
+    Uses an LLM to translate text.
+    """
+    client: OllamaClient
 
-        if lang == Language.ENGLISH:
-            translated = argostranslate.translate.translate(text, "en", "fr")
-            return translated
+    def __init__(self, ollama_client: OllamaClient, model: str = "gemma4:4b", prompt:str = "[TEXT]") -> None:
+        self.client = ollama_client
+        self.prompt = prompt
+        self.model = model
 
-        return text
-
+    def translate(self, text: str ) -> str:
+        """
+        Translates the given text.
+        :param text: The text to translate.
+        :return: The translated text.
+        """
+        response = self.client.request(
+            model=self.model,
+            message=self.prompt.replace("[TEXT]", text),
+            think=False
+        )
+        return response.message.content
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     text = "Press \"Haggle!\" when the arrow is inside the golden bonus areas to improve the terms ofthe deal. Hitting the bonus areas tips the scale in your favor but missing them does the opposite. The scale will also gradually tip out of your favor once haggling begins The bonus areas will shrink and get harder and harder to hit each time s0 don \'t haggle for too long Fo end haggling and set the terms ofthe deal, get the arrowin one ofthe green bonus areas on the sides"
-    print(Translator().to_french(text))
+    client = OllamaClient(url="http://localhost:11434",
+                          api_key="",
+                          system_prompt="Tu es un assistant qui aide un utilisateur mal-voyant à comprendre le texte affiché par une application ou un jeu vidéo. L'utilisateur pourra t'envoyer des textes issus de traitements OCR afin de les lire et/ou les traduire.")
+    tran = LlmTranslator(client,
+                            model="gemma4:e2b",
+                            prompt="Traduis le texte suivant vers le français. Le texte peut contenir des erreurs car il a été construit par un OCR. Rectifie ces erreurs si possible. Le texte traduit sera lu à l'utilisateur via omnivoice. Tu peux donc ajouter les tags suivants dans le texte généré afin d'indiquer à omnivoice comment le lire parmi [laughter], [sigh], [confirmation-en], [question-en], [question-ah], [question-oh], [question-ei], [question-yi], [surprise-ah], [surprise-oh], [surprise-wa], [surprise-yo], [dissatisfaction-hnn]. Les tags ne sont pas nécessaires, et ne doivent pas être traduits s'ils sont présents. La réponse ne doit contenir que la traduction, et rien d'autre.\n[TEXT]")
+    print(tran.translate(text))

@@ -20,7 +20,7 @@ class ProcessingOverlayBridge(QObject):
     __close_signal = Signal()
     __overlay: ProcessingOverlay | None = None
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         """
         Construct a ProcessingOverlayBridge.
         """
@@ -30,39 +30,38 @@ class ProcessingOverlayBridge(QObject):
         self.__load_signal.connect(self.__qt_load)
         self.__play_signal.connect(self.__qt_play)
         self.__close_signal.connect(self.__qt_close)
+        self.overlay_kwargs = kwargs
+
+    def __ensure_overlay(self) -> ProcessingOverlay:
+        """
+        Ensures the overlay is set up.
+        :return: The overlay.
+        """
+        if self.__overlay is None:
+            self.__overlay = ProcessingOverlay(**self.overlay_kwargs)
+            self.__overlay.show()
+        return self.__overlay
 
     def __qt_wait(self) -> None:
         """
         Displays the Qt area selection overlay.
         """
         logger.info("Setting processing overlay to wait...")
-        if self.__overlay is None:
-            self.__overlay = ProcessingOverlay()
-            self.__overlay.show()
-
-        self.__overlay.set_waiting()
+        self.__ensure_overlay().set_waiting()
 
     def __qt_load(self) -> None:
         """
         Displays the Qt area selection overlay.
         """
         logger.info("Setting processing overlay to wait...")
-        if self.__overlay is None:
-            self.__overlay = ProcessingOverlay()
-            self.__overlay.show()
-
-        self.__overlay.set_loading()
+        self.__ensure_overlay().set_loading()
 
     def __qt_play(self) -> None:
         """
         Displays the Qt area selection overlay.
         """
         logger.info("Setting processing overlay to wait...")
-        if self.__overlay is None:
-            self.__overlay = ProcessingOverlay()
-            self.__overlay.show()
-
-        self.__overlay.set_playing()
+        self.__ensure_overlay().set_playing()
 
 
     def __qt_close(self) -> None:

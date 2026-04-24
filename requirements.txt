@@ -10,3 +10,5 @@ lingua-language-detector
 argostranslate
 omnivoice
 PySide6
+jsonmerge
+ollama

@@ -11,17 +11,30 @@ from PySide6.QtGui import QPainter, QColor, QLinearGradient
 from PySide6.QtWidgets import QApplication, QWidget
 
 
+def _mix_colors(color1: QColor, color2: QColor, ratio: float) -> QColor:
+    ratio = max(0.0, min(1.0, ratio))
+    inv = 1.0 - ratio
+    return QColor(
+        int(color1.red() * inv + color2.red() * ratio),
+        int(color1.green() * inv + color2.green() * ratio),
+        int(color1.blue() * inv + color2.blue() * ratio),
+        int(color1.alpha() * inv + color2.alpha() * ratio),
+    )
+
+
 class ProcessingOverlay(QWidget):
     """
     A small always-on-top overlay displayed at the top of the screen
     showing an indeterminate processing animation.
     """
 
-    def __init__(self, width: int = 200, height: int = 20):
+    def __init__(self, width: int = 200, height: int = 20, bar_color: QColor | list[int] | tuple[int, int, int] | tuple[int, int, int, int] = (0, 140, 255, 220)):
         """
         Initialize the processing overlay.
 
+        :param width: The width of the overlay in pixels.
         :param height: The height of the overlay bar in pixels.
+        :param bar_color: The color of the bar overlay.
         """
         super().__init__()
 
@@ -49,6 +62,7 @@ class ProcessingOverlay(QWidget):
 
         self.bar_width = 6
         self.bar_gap = 2
+        self._bar_color = self._normalize_color(bar_color)
 
         self.paintAnimation = None
         self.set_waiting()
@@ -57,10 +71,47 @@ class ProcessingOverlay(QWidget):
         self.paintAnimation = self.__paint_comet
 
     def set_waiting(self):
-        self.paintAnimation = self.__paint_comet
+        self.paintAnimation = self.__paint_pulse
 
     def set_playing(self):
         self.paintAnimation = self.__paint_multi_sonogram
+
+    @property
+    def bar_color(self) -> QColor:
+        return QColor(self._bar_color)
+
+    @bar_color.setter
+    def bar_color(self, value: QColor | tuple[int, int, int] | tuple[int, int, int, int]) -> None:
+        self._bar_color = self._normalize_color(value)
+        self.update()
+
+    def _normalize_color(self, value: QColor | list[int] | tuple[int, int, int] | tuple[int, int, int, int]) -> QColor:
+        if isinstance(value, list):
+            return self._normalize_color(tuple(value))
+        if isinstance(value, QColor):
+            color = QColor(value)
+        elif isinstance(value, tuple):
+            if len(value) == 3:
+                color = QColor(*value, 220)
+            elif len(value) == 4:
+                color = QColor(*value)
+            else:
+                raise ValueError("bar_color tuple must contain 3 (RGB) or 4 (RGBA) integers")
+        else:
+            raise TypeError("bar_color must be a QColor or an RGB/RGBA tuple")
+
+        if not color.isValid():
+            raise ValueError("Invalid bar_color value")
+        return color
+
+    def _bar_color_variant(self, brightness_factor: float = 1.0, alpha_factor: float = 1.0) -> QColor:
+        color = QColor(self._bar_color)
+        if brightness_factor >= 1.0:
+            color = color.lighter(int(brightness_factor * 100))
+        else:
+            color = color.darker(max(1, int(100 / brightness_factor)))
+        color.setAlpha(max(0, min(255, int(self._bar_color.alpha() * alpha_factor))))
+        return color
 
     def paintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self)
@@ -93,8 +144,8 @@ class ProcessingOverlay(QWidget):
         step = self.bar_width + self.bar_gap
         bar_count = max(1, width // step)
 
-        base_color = QColor(0, 140, 255, 220)
-        peak_color = QColor(80, 220, 255, 245)
+        base_color = self._bar_color_variant(brightness_factor=1.0, alpha_factor=1.0)
+        peak_color = self._bar_color_variant(brightness_factor=1.45, alpha_factor=1.12)
 
         for index in range(bar_count):
             x = index * step
@@ -116,17 +167,14 @@ class ProcessingOverlay(QWidget):
             y = int((height - bar_height) / 2)
 
             color_mix = min(1.0, level * 1.1)
-            r = int(base_color.red() * (1 - color_mix) + peak_color.red() * color_mix)
-            g = int(base_color.green() * (1 - color_mix) + peak_color.green() * color_mix)
-            b = int(base_color.blue() * (1 - color_mix) + peak_color.blue() * color_mix)
-            a = int(base_color.alpha() * (1 - color_mix) + peak_color.alpha() * color_mix)
+            mixed_color = _mix_colors(base_color, peak_color, color_mix)
 
             painter.fillRect(
                 int(center_x - self.bar_width / 2),
                 y,
                 self.bar_width,
                 int(bar_height),
-                QColor(r, g, b, a),
+                mixed_color,
             )
 
         painter.end()
@@ -145,7 +193,7 @@ class ProcessingOverlay(QWidget):
         bar_count = max(1, width // step)
         center = (bar_count - 1) / 2
 
-        color = QColor(0, 150, 255, 230)
+        color = self._bar_color_variant(brightness_factor=1.08, alpha_factor=1.05)
 
         for index in range(bar_count):
             x = index * step
@@ -167,12 +215,15 @@ class ProcessingOverlay(QWidget):
             y = int((height - bar_height) / 2)
 
             alpha = int(120 + 120 * level)
+            pulse_color = QColor(color)
+            pulse_color.setAlpha(max(0, min(255, alpha)))
+
             painter.fillRect(
                 x,
                 y,
                 self.bar_width,
                 int(bar_height),
-                QColor(color.red(), color.green(), color.blue(), alpha),
+                pulse_color,
             )
 
         painter.end()
@@ -213,14 +264,17 @@ class ProcessingOverlay(QWidget):
             y = int((height - bar_height) / 2)
 
             alpha = int(40 + 210 * intensity)
-            blue = int(180 + 75 * intensity)
+            comet_base = self._bar_color_variant(brightness_factor=0.85, alpha_factor=0.35)
+            comet_head = self._bar_color_variant(brightness_factor=1.35, alpha_factor=1.0)
+            comet_color = _mix_colors(comet_base, comet_head, intensity)
+            comet_color.setAlpha(max(0, min(255, alpha)))
 
             painter.fillRect(
                 x,
                 y,
                 self.bar_width,
                 int(bar_height),
-                QColor(0, 120, blue, alpha),
+                comet_color,
             )
 
         painter.end()
@@ -228,5 +282,7 @@ class ProcessingOverlay(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     overlay = ProcessingOverlay()
+    overlay.bar_color = (250, 250, 250)
+    overlay.set_waiting()
     overlay.show()
     sys.exit(app.exec())
