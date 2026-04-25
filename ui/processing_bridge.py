@@ -44,29 +44,28 @@ class ProcessingOverlayBridge(QObject):
 
     def __qt_wait(self) -> None:
         """
-        Displays the Qt area selection overlay.
+        Set the overlay to wait mode on the Qt thread.
         """
         logger.info("Setting processing overlay to wait...")
         self.__ensure_overlay().set_waiting()
 
     def __qt_load(self) -> None:
         """
-        Displays the Qt area selection overlay.
+        Set the overlay to loading mode on the Qt thread.
         """
-        logger.info("Setting processing overlay to wait...")
+        logger.info("Setting processing overlay to load...")
         self.__ensure_overlay().set_loading()
 
     def __qt_play(self) -> None:
         """
-        Displays the Qt area selection overlay.
+        Set the overlay to play mode on the Qt thread.
         """
-        logger.info("Setting processing overlay to wait...")
+        logger.info("Setting processing overlay to play...")
         self.__ensure_overlay().set_playing()
-
 
     def __qt_close(self) -> None:
         """
-        Displays the Qt area selection overlay.
+        Close the overlay on the Qt thread.
         """
         logger.info("Closing processing overlay...")
         if self.__overlay is not None:

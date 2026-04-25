@@ -27,18 +27,45 @@ class Config(object):
                         self.data = jsonmerge.merge(self.data, json.load(f))
 
     def __iter__(self):
+        """
+        Iterate over the top-level keys in the configuration.
+
+        :return: An iterator of the top-level keys.
+        """
         return iter(self.data)
 
     def __getitem__(self, key: str) -> Any:
+        """
+        Retrieve a configuration value by its top-level key.
+
+        :param key: The top-level key to retrieve.
+        :return: The corresponding configuration value.
+        """
         return self.data[key]
 
     def get(self, key: str, default: Any = None) -> Any:
+        """
+        Retrieve a configuration value by key with an optional default.
+
+        If the value is a dictionary, it is wrapped into a Config instance.
+
+        :param key: The top-level key to retrieve.
+        :param default: Default value to return if the key is absent.
+        :return: The corresponding configuration value or the default.
+        """
         res = self.data.get(key, default)
         if isinstance(res, Dict):
             return Config(res)
         return res
 
     def __call__(self, *args: str, default: Any = None) -> Any:
+        """
+        Navigate through nested configuration values using a sequence of keys.
+
+        :param args: Sequence of nested keys to traverse.
+        :param default: Default value to return if any key is absent.
+        :return: The value found at the end of the path, or the default if a key is missing.
+        """
         d = self.data
         for arg in args:
             if arg in d:

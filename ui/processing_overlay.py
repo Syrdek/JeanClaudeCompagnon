@@ -68,12 +68,21 @@ class ProcessingOverlay(QWidget):
         self.set_waiting()
 
     def set_loading(self):
+        """
+        Set the overlay animation to loading mode.
+        """
         self.paintAnimation = self.__paint_comet
 
     def set_waiting(self):
+        """
+        Set the overlay animation to waiting mode.
+        """
         self.paintAnimation = self.__paint_pulse
 
     def set_playing(self):
+        """
+        Set the overlay animation to playing mode.
+        """
         self.paintAnimation = self.__paint_multi_sonogram
 
     @property
@@ -86,6 +95,16 @@ class ProcessingOverlay(QWidget):
         self.update()
 
     def _normalize_color(self, value: QColor | list[int] | tuple[int, int, int] | tuple[int, int, int, int]) -> QColor:
+        """
+        Normalize a color value to a QColor object.
+
+        Supports QColor, list, or tuple with 3 (RGB) or 4 (RGBA) components.
+
+        :param value: The color value to normalize.
+        :return: A valid QColor object.
+        :raises ValueError: If the tuple length is invalid or the color is not valid.
+        :raises TypeError: If the value type is unsupported.
+        """
         if isinstance(value, list):
             return self._normalize_color(tuple(value))
         if isinstance(value, QColor):
@@ -105,6 +124,13 @@ class ProcessingOverlay(QWidget):
         return color
 
     def _bar_color_variant(self, brightness_factor: float = 1.0, alpha_factor: float = 1.0) -> QColor:
+        """
+        Generate a variant of the bar color with adjusted brightness and alpha.
+
+        :param brightness_factor: Factor to lighten (>1.0) or darken (<1.0) the color.
+        :param alpha_factor: Factor to scale the alpha channel.
+        :return: A new QColor with the modified properties.
+        """
         color = QColor(self._bar_color)
         if brightness_factor >= 1.0:
             color = color.lighter(int(brightness_factor * 100))
@@ -114,6 +140,11 @@ class ProcessingOverlay(QWidget):
         return color
 
     def paintEvent(self, event: QPaintEvent) -> None:
+        """
+        Paint the overlay background and the active animation.
+
+        :param event: The Qt paint event.
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
@@ -199,11 +230,11 @@ class ProcessingOverlay(QWidget):
             x = index * step
             dist = abs(index - center) / max(1.0, center)
 
-            # La phase se propage vers l'extérieur
+            # The phase propagates outward
             propagation = self._phase * 2 * math.pi * 2.0 - dist * 7.0
             pulse = 0.5 + 0.5 * math.sin(propagation)
 
-            # Accentuation du contraste
+            # Contrast enhancement
             pulse = pulse ** 2.2
 
             level = (1.0 - dist * 0.55) * (0.15 + 0.85 * pulse)
@@ -247,7 +278,7 @@ class ProcessingOverlay(QWidget):
             x = index * step
             d = index - head_pos
 
-            # Tête + traîne exponentielle
+            # Head + exponential tail
             if d < 0:
                 intensity = math.exp(d / 4.0)
             else:

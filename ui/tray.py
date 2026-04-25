@@ -10,16 +10,26 @@ from PySide6.QtWidgets import (
 
 
 class TrayApp:
+    """
+    System tray application icon with a context menu.
+    """
+
     def __init__(self,
                  app: QApplication,
                  read_callback: Callable[[], None]):
+        """
+        Construct a TrayApp and initialize the tray icon and menu.
+
+        :param app: The Qt application instance.
+        :param read_callback: Callable invoked when the user selects the read action.
+        """
         self.app = app
 
         if not QSystemTrayIcon.isSystemTrayAvailable():
-            raise RuntimeError("La zone de notification n'est pas disponible sur ce système.")
+            raise RuntimeError("The system tray is not available on this system.")
 
         self.tray = QSystemTrayIcon()
-        self.tray.setIcon(QIcon("icon.png"))  # remplace par ton fichier
+        self.tray.setIcon(QIcon("icon.png"))  # replace with your icon file
         self.tray.setToolTip("Compagnon Jean-Claude")
 
         menu = QMenu()
@@ -39,6 +49,11 @@ class TrayApp:
         self.tray.show()
 
     def on_tray_activated(self, reason):
+        """
+        Handle tray activation events.
+
+        :param reason: The activation reason provided by Qt.
+        """
         pass
 
 

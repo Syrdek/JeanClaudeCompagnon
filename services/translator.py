@@ -7,8 +7,18 @@ from services.ollama_llm import OllamaClient
 
 
 class Translator(object, metaclass=abc.ABCMeta):
+    """
+    Abstract base class for text translators.
+    """
+
     @abc.abstractmethod
     def translate(self, text: str) -> str:
+        """
+        Translate the given text.
+
+        :param text: The text to translate.
+        :return: The translated text.
+        """
         pass
 
 
@@ -22,7 +32,11 @@ class ArgosTranslator(object):
                  source_language: str = "eng",
                  model_dir: str = "models/argos") -> None:
         """
-        Construct a Translator with a French/English language detector.
+        Construct an ArgosTranslator.
+
+        :param target_language: Target language code (e.g. "fra").
+        :param source_language: Source language code (e.g. "eng").
+        :param model_dir: Directory containing Argos model files.
         """
         self.source_language = source_language
         self.target_language = target_language
@@ -66,7 +80,14 @@ class LlmTranslator(Translator):
     """
     client: OllamaClient
 
-    def __init__(self, ollama_client: OllamaClient, model: str = "gemma4:4b", prompt:str = "[TEXT]") -> None:
+    def __init__(self, ollama_client: OllamaClient, model: str = "gemma4:4b", prompt: str = "[TEXT]") -> None:
+        """
+        Construct an LlmTranslator.
+
+        :param ollama_client: The Ollama client to use for translation requests.
+        :param model: Name of the model to use for translation.
+        :param prompt: Prompt template containing "[TEXT]" as a placeholder for the input text.
+        """
         self.client = ollama_client
         self.prompt = prompt
         self.model = model

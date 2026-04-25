@@ -11,6 +11,9 @@ class Detector(object):
     def __init__(self, target_language: str = "french", source_languages: List[str] | str = ["french", "english"]):
         """
         Construct a language detector.
+
+        :param target_language: The target language used for comparison.
+        :param source_languages: List of languages the detector should recognize.
         """
         if isinstance(source_languages, str):
             source_languages = [source_languages]

@@ -21,11 +21,21 @@ from omnivoice import OmniVoice
 
 
 class TTS(object, metaclass=ABCMeta):
+    """
+    Abstract base class for text-to-speech engines.
+    """
+
     def __init__(self):
         pass
 
     @abc.abstractmethod
     def generate(self, text: str):
+        """
+        Generate audio samples for the given text.
+
+        :param text: The text to synthesize.
+        :return: A tuple containing the generated audio samples and the sample rate.
+        """
         pass
 
 
@@ -92,6 +102,9 @@ class OmnivoiceTTS(TTS):
         )
 
     def __download_model(self):
+        """
+        Download the OmniVoice model files from the Hugging Face hub.
+        """
         import huggingface_hub
         huggingface_hub.snapshot_download(
             repo_id="k2-fsa/OmniVoice",
