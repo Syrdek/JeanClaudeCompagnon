@@ -31,7 +31,8 @@
     "url": "http://localhost:11434",
     "model": "gemma4:e2b",
     "key": "",
-    "system-prompt": "Tu es un assistant qui aide un utilisateur mal-voyant à comprendre le texte affiché par une application ou un jeu vidéo. L'utilisateur pourra t'envoyer des textes issus de traitements OCR afin de les lire et/ou les traduire."
+    "system-prompt": "Tu es un assistant qui aide un utilisateur mal-voyant à comprendre le texte affiché par une application ou un jeu vidéo. L'utilisateur pourra t'envoyer des textes issus de traitements OCR afin de les lire et/ou les traduire.",
+    "max-history": 5
   },
 
   "keybind": {

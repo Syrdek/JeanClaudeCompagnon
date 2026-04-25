@@ -39,7 +39,8 @@ def main():
     llm = OllamaClient(
         url=config("llm", "url"),
         api_key=config("llm", "key"),
-        system_prompt=config("llm", "system-prompt")
+        system_prompt=config("llm", "system-prompt"),
+        max_history=config("llm", "max-history", default=5)
     )
 
     logger.info("Creating translator")

@@ -52,7 +52,7 @@ class ScreenReader(object):
         :param to_point: Bottom-right corner of the region to capture.
         """
         try:
-            self.overlay.wait()
+            self.overlay.load()
 
             logger.info("Reading screen...")
             img = self.screener.screenshot(from_point, to_point)

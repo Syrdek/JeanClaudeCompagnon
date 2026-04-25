@@ -8,7 +8,8 @@ class OllamaClient(object):
 
     def __init__(self, url: str = "http://localhost:11434",
                  api_key: str = "",
-                 system_prompt: str = None):
+                 system_prompt: str = None,
+                 max_history: int = 10):
         kwargs = {}
         if api_key:
             kwargs["headers"]={'Authorization': 'Bearer ' + api_key}
@@ -16,11 +17,8 @@ class OllamaClient(object):
         self.client = Client(host=url, **kwargs)
         self.history = []
 
-        if system_prompt:
-            self.history.append({
-                "role": "system",
-                "content": system_prompt,
-            })
+        self.system_prompt = system_prompt
+        self.max_history = max_history
 
 
     def history_add(self, content: str, role: str="assistant", **kwargs):
@@ -32,7 +30,17 @@ class OllamaClient(object):
         if message is not None:
             self.history_add(content=message, role="user")
 
-        response = self.client.chat(model=model, messages=self.history, **kwargs)
+        history = self.history
+        if self.max_history and len(history) > self.max_history:
+            history = history[: self.max_history]
+
+        if self.system_prompt is not None:
+            history = [{
+                "role": "system",
+                "content": self.system_prompt,
+            }] + history
+
+        response = self.client.chat(model=model, messages=history, **kwargs)
         response_message = response.message
         self.history_add(
             content=response_message.content,
