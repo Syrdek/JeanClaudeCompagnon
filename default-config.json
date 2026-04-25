@@ -13,7 +13,9 @@
     "model_path": "models/OmniVoice",
     "ref_voice_path": null,
     "ref_voice_text": null,
-    "repo_id": "k2-fsa/OmniVoice"
+    "repo_id": "k2-fsa/OmniVoice",
+    "device": "auto",
+    "download": true
   },
 
   "lang-detector": {
@@ -30,7 +32,7 @@
   "argos": {
     "source": "eng",
     "target": "fra",
-    "model_dir": "models/argos"
+    "model_path": "models/argos"
   },
 
   "llm": {
@@ -38,13 +40,33 @@
     "url": "http://localhost:11434",
     "model": "gemma4:e2b",
     "key": "",
-    "system-prompt": "Tu es un assistant qui aide un utilisateur mal-voyant à comprendre le texte affiché par une application ou un jeu vidéo. L'utilisateur pourra t'envoyer des textes issus de traitements OCR afin de les lire et/ou les traduire.",
+    "system-prompt": "Tu es un assistant qui aide un utilisateur mal-voyant à comprendre le texte affiché par une application ou un jeu vidéo. L'utilisateur pourra t'envoyer des textes issus de traitements OCR afin de les lire et/ou les traduire, ou des questions dictées par microphone. Tes réponses doivent être courtes afin d'être dictées à l'utilisateur, sauf instruction contraire de l'utilisateur.",
     "max-history": 5
+  },
+
+  "microphone": {
+      "sample-rate": 16000,
+      "channels": 1,
+      "dtype": "float32",
+      "device": null,
+      "blocksize": 1024
+  },
+
+  "stt": {
+     "model": "small",
+     "model_path": "models/faster-whisper",
+     "device": "auto",
+     "compute_type": "int8",
+     "download": true
   },
 
   "keybind": {
     "capture": {
-      "key": "ctrl+f1",
+      "key": "shift+f1",
+      "strict": true
+    },
+    "ask": {
+      "key": "shift+f2",
       "strict": true
     }
   },

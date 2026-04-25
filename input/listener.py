@@ -1,5 +1,8 @@
 import logging
+from contextlib import suppress
 from typing import List, Tuple, Union, Set
+
+from pynput import keyboard, mouse
 from pynput.keyboard import Key, KeyCode
 
 from input.key import combination_from_str, normalize_key, patch_win32_key
@@ -14,7 +17,7 @@ class InputListener(object):
     to react to key press and release events.
     """
 
-    def on_press(self, key: KeyCode, mouse_x: int, mouse_y: int):
+    def on_press(self, key: KeyCode, mouse_x: int, mouse_y: int) -> None:
         """
         Called when a key is pressed.
 
@@ -24,7 +27,7 @@ class InputListener(object):
         """
         pass
 
-    def on_release(self, key: KeyCode, mouse_x: int, mouse_y: int):
+    def on_release(self, key: KeyCode, mouse_x: int, mouse_y: int) -> None:
         """
         Called when a key is released.
 
@@ -77,7 +80,7 @@ class CombinationListener(InputListener):
         self.strict = strict
         self.tainted = False
 
-    def on_press(self, key: KeyCode, mouse_x: int, mouse_y: int):
+    def on_press(self, key: KeyCode, mouse_x: int, mouse_y: int) -> None:
         """
         Handle a key press event.
 
@@ -106,7 +109,7 @@ class CombinationListener(InputListener):
             logger.debug(f"Key combination was tainted by {key}")
             self.tainted = True
 
-    def on_release(self, key: KeyCode, mouse_x: int, mouse_y: int):
+    def on_release(self, key: KeyCode, mouse_x: int, mouse_y: int) -> None:
         """
         Handle a key release event.
 

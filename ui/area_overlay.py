@@ -1,6 +1,6 @@
 import sys
 
-from PySide6.QtGui import QMouseEvent, QKeyEvent, QPaintEvent
+from PySide6.QtGui import QMouseEvent, QKeyEvent, QPaintEvent, QIcon
 from PySide6.QtCore import Qt, QRect, QPoint
 from PySide6.QtGui import QPainter, QColor, QPen, QPainterPath
 from PySide6.QtWidgets import QApplication, QWidget
@@ -45,6 +45,8 @@ class AreaSelectionOverlay(QWidget):
 
         # Use a cross cursor for precise selection
         self.setCursor(Qt.CrossCursor)
+
+        self.setWindowIcon(QIcon("icon.png"))
 
     def on_cancel(self) -> None:
         """

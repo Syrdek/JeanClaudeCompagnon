@@ -1,23 +1,14 @@
 import abc
-import asyncio
 import os
-import queue
-import time
 from abc import ABCMeta
 from queue import Queue
-from threading import Thread
-from typing import Any, Tuple
+from typing import Tuple
 
 import numpy as np
 import sounddevice
 import torch
-from kokoro_onnx import Kokoro
 from omnivoice import OmniVoice
 
-
-# Examples : https://github.com/thewh1teagle/kokoro-onnx/blob/main/examples/save.py
-# Voices available : https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md
-# Voices creation : https://github.com/RobViren/kvoicewalk
 
 
 class TTS(object, metaclass=ABCMeta):
@@ -39,39 +30,6 @@ class TTS(object, metaclass=ABCMeta):
         pass
 
 
-class KokoroTTS(TTS):
-
-    def __init__(self,
-                 model_path: str = "models/kokoro/kokoro-v1.0.fp16.onnx",
-                 voices_path: str = "models/kokoro/voices-v1.0.bin",
-                 voice: str = "ff_siwis",
-                 speed: float = 1.0,
-                 lang: str = "fr-fr"):
-        """
-        Construct a TTS Kokoro.
-
-        :param model_path: Path to the Kokoro ONNX model file.
-        :param voices_path: Path to the Kokoro voices binary file.
-        :param voice: Voice identifier to use for synthesis.
-        :param speed: Speech speed multiplier.
-        :param lang: Language code for synthesis (e.g. "fr-fr").
-        """
-        super().__init__()
-
-        self.kokoro = Kokoro(model_path, voices_path)
-        self.voice = voice
-        self.speed = speed
-        self.lang = lang
-
-    def generate(self, text: str) -> Tuple[np.typing.NDArray, int]:
-        """
-        Generate audio samples for the given text.
-
-        :param text: The text to synthesize.
-        :return: A tuple containing the generated audio samples and the sample rate.
-        """
-        return self.kokoro.create(text, voice=self.voice, speed=self.speed, lang=self.lang)
-
 
 class OmnivoiceTTS(TTS):
 
@@ -79,13 +37,17 @@ class OmnivoiceTTS(TTS):
                  model_path: str = "models/OmniVoice",
                  ref_voice_path: str = None,
                  ref_voice_text: str = None,
-                 repo_id="k2-fsa/OmniVoice"):
+                 repo_id: str = "k2-fsa/OmniVoice",
+                 device: str = "auto",
+                 download: bool = True):
         """
         Construct a TTS Omnivoice.
 
         :param model_path: Path to the model file.
         :param ref_voice_path: Path reference voice to clone. Optional.
         :param ref_voice_text: Path reference voice text. Optional.
+        :param repo_id: The huggingface repo id. Optional.
+        :param device: The device to use to run model. Optional.
         """
         super().__init__()
 
@@ -94,13 +56,19 @@ class OmnivoiceTTS(TTS):
         self.ref_voice_path = ref_voice_path
         self.ref_voice_text = ref_voice_text
 
-        if not os.path.isfile(os.path.join(self.model_path, "model.safetensors")):
+        if download and not os.path.isfile(os.path.join(self.model_path, "model.safetensors")):
             self.__download_model()
+
+        if device == "auto":
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            self.device = device
 
         self.model = OmniVoice.from_pretrained(
             model_path,
-            device_map="cuda" if torch.cuda.is_available() else "cpu",
-            dtype=torch.float16
+            device_map=self.device,
+            dtype=torch.float16,
+            local_files_only=not download
         )
 
     def __download_model(self):
@@ -133,7 +101,7 @@ class TextReader(object):
     Reads a given text aloud using the Kokoro TTS engine.
     """
     audio_queue = Queue()
-    kokoro: Kokoro
+    tts: TTS
 
     def __init__(self,
                  tts: TTS | None = None):

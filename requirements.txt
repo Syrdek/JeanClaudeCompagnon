@@ -1,5 +1,3 @@
-kokoro-onnx
-onnxruntime
 soundfile
 sounddevice
 pynput
@@ -12,3 +10,4 @@ omnivoice
 PySide6
 jsonmerge
 ollama
+faster-whisper

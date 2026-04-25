@@ -35,6 +35,8 @@ class InputHook(object):
     """
 
     listeners: List[InputListener] = []
+    key_listener: keyboard.Listener = None
+    mouse_listener: mouse.Listener = None
 
     def __init__(self):
         """
@@ -51,7 +53,9 @@ class InputHook(object):
         Run the keyboard and mouse event capture loop, and blocs until the end.
         """
         with keyboard.Listener(on_press=self._on_press, on_release=self._on_release, suppress=False) as key_listener, \
-                mouse.Listener(on_move=self._on_move) as mouse_listener:
+                mouse.Listener(on_move=self._on_move, suppress=False) as mouse_listener:
+            self.mouse_listener = mouse_listener
+            self.key_listener = key_listener
             mouse_listener.join()
             key_listener.join()
 
@@ -108,7 +112,7 @@ class InputHook(object):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     app = InputHook()
-    c = CombinationListener(combination_from_str("ctrl+a"), strict=True)
+    c = CombinationListener(combination_from_str("ctrl+f1"), strict=True)
     c.on_combination_typed = lambda mouse_start, mouse_end: print(mouse_start, mouse_end)
     app.listeners.append(c)
     app.run()

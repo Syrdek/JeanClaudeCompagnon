@@ -12,7 +12,8 @@ class OllamaClient(object):
     def __init__(self, url: str = "http://localhost:11434",
                  api_key: str = "",
                  system_prompt: str = None,
-                 max_history: int = 10):
+                 max_history: int = 10,
+                 default_model: str = None):
         """
         Construct an OllamaClient.
 
@@ -30,6 +31,7 @@ class OllamaClient(object):
 
         self.system_prompt = system_prompt
         self.max_history = max_history
+        self.default_model = default_model
 
     def history_add(self, content: str, role: str = "assistant", **kwargs):
         """
@@ -42,7 +44,7 @@ class OllamaClient(object):
         msg.update(kwargs)
         self.history.append(msg)
 
-    def request(self, model: str, message: str = None, **kwargs) -> ChatResponse:
+    def request(self, message: str = None, model: str = None, **kwargs) -> ChatResponse:
         """
         Send a chat request to the Ollama API.
 
@@ -53,6 +55,8 @@ class OllamaClient(object):
         :param kwargs: Additional keyword arguments forwarded to the underlying client.
         :return: The chat response returned by the API.
         """
+        model = model or self.default_model
+
         if message is not None:
             self.history_add(content=message, role="user")
 

@@ -1,13 +1,9 @@
-import ctypes
 import math
-import platform
 import sys
-from math import sin, pi
 
-import PySide6
-from PyQt6.QtGui import QPaintEvent
+from PySide6.QtGui import QPaintEvent, QIcon
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QPainter, QColor, QLinearGradient
+from PySide6.QtGui import QPainter, QColor
 from PySide6.QtWidgets import QApplication, QWidget
 
 
@@ -48,6 +44,8 @@ class ProcessingOverlay(QWidget):
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_NoSystemBackground)
+
+        self.setWindowIcon(QIcon("icon.png"))
 
         # No border and no margins
         self.setContentsMargins(0, 0, 0, 0)

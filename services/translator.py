@@ -22,7 +22,7 @@ class Translator(object, metaclass=abc.ABCMeta):
         pass
 
 
-class ArgosTranslator(object):
+class ArgosTranslator(Translator):
     """
     Translates text using argos translation.s
     """
