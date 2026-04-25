@@ -78,7 +78,8 @@ class OmnivoiceTTS(TTS):
     def __init__(self,
                  model_path: str = "models/OmniVoice",
                  ref_voice_path: str = None,
-                 ref_voice_text: str = None):
+                 ref_voice_text: str = None,
+                 repo_id="k2-fsa/OmniVoice"):
         """
         Construct a TTS Omnivoice.
 
@@ -88,6 +89,7 @@ class OmnivoiceTTS(TTS):
         """
         super().__init__()
 
+        self.repo_id = repo_id
         self.model_path = model_path
         self.ref_voice_path = ref_voice_path
         self.ref_voice_text = ref_voice_text
@@ -96,7 +98,7 @@ class OmnivoiceTTS(TTS):
             self.__download_model()
 
         self.model = OmniVoice.from_pretrained(
-            "models/OmniVoice",
+            model_path,
             device_map="cuda" if torch.cuda.is_available() else "cpu",
             dtype=torch.float16
         )
@@ -107,7 +109,7 @@ class OmnivoiceTTS(TTS):
         """
         import huggingface_hub
         huggingface_hub.snapshot_download(
-            repo_id="k2-fsa/OmniVoice",
+            repo_id=self.repo_id,
             local_dir=self.model_path
         )
 

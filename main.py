@@ -65,7 +65,9 @@ def main():
     hook = InputHook()
 
     logger.info("Creating ocr")
-    ocr = Ocr()
+    ocr = Ocr(model_path=config("ocr", "model_path", default=None),
+              langs=config("ocr", "langs", default=[]),
+              download=config("ocr", "download", default=True))
 
     processing_bridge = ProcessingOverlayBridge(
         width=config("processing-overlay", "width", default=200),

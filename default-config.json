@@ -3,10 +3,17 @@
     "pixel_sensibility": 10
   },
 
+  "ocr": {
+    "download": true,
+    "model_path": "models/easy_ocr",
+    "langs": ["fr", "en"]
+  },
+
   "tts": {
     "model_path": "models/OmniVoice",
     "ref_voice_path": null,
-    "ref_voice_text": null
+    "ref_voice_text": null,
+    "repo_id": "k2-fsa/OmniVoice"
   },
 
   "lang-detector": {

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 
 import easyocr
 import numpy
@@ -12,13 +12,18 @@ class Ocr(object):
     Supports French and English text extraction from images.
     """
 
-    def __init__(self):
+    def __init__(self, model_path: str = "models/easy_ocr", langs: List[str] = None, download: bool = False):
         """
         Construct an Ocr instance with a French/English EasyOCR reader.
 
         The reader uses locally stored models and does not download them.
+        :param model_path: Path to the EasyOCR model.
+        :param langs: List of languages supported by EasyOCR.
+        :param download: Whether to download or not the EasyOCR model.
         """
-        self.ocr = easyocr.Reader(lang_list=["fr", "en"], model_storage_directory="models/easy_ocr", download_enabled=False)
+        self.ocr = easyocr.Reader(lang_list=langs or ["fr", "en"],
+                                  model_storage_directory=model_path,
+                                  download_enabled=download)
 
     def read(self, img: Any, **kwargs) -> Any:
         """
