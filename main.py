@@ -3,6 +3,7 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
+from server.http_server import HttpServer
 from util.config import Config
 from core.audio_chat import AudioChat
 from core.screen_reader import ScreenReader
@@ -77,6 +78,11 @@ def main():
 
     # System tray integration with area_bridge.show as the activation callback.
     tray_app = TrayApp(app=app, read_callback=area_bridge.show)
+
+    # Exposes services if enabled.
+    if config("expose", "enabled", default=False):
+        server = HttpServer.from_config(config("expose"))
+        server.start()
 
     # Enter the Qt event loop; will block until the application exits.
     sys.exit(app.exec())
