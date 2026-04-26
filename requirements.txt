@@ -12,8 +12,11 @@ omnivoice
 PySide6
 jsonmerge
 jsonref
+pyjson5
 addict
 ollama
 faster-whisper
+requests
 werkzeug
 flask
+scipy

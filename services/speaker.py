@@ -3,14 +3,16 @@ import logging
 import os
 from abc import ABCMeta
 from queue import Queue
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 import sounddevice
 import torch
 from omnivoice import OmniVoice
 
-from config.util import Config
+import util.convertion
+from util.config import Config
+from util.retry import MultipleUrlRemote
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +31,13 @@ class TTS(object, metaclass=ABCMeta):
                                repo_id=config("repo_id", default="k2-fsa/OmniVoice"),
                                device=config("device", default="auto"),
                                download=config("download", default=True))
+        elif spk_type == "remote":
+            return RemoteTTS(url=config("url", default="http://localhost:11111/tts"),)
 
         raise AttributeError(f"TTS type not supported: {spk_type}")
 
     @abc.abstractmethod
-    def generate(self, text: str):
+    def generate(self, text: str) -> Tuple[np.typing.NDArray, int]:
         """
         Generate audio samples for the given text.
 
@@ -109,6 +113,19 @@ class OmnivoiceTTS(TTS):
         return audio[0], 24000
 
 
+class RemoteTTS(MultipleUrlRemote, TTS):
+
+    def generate(self, text: str) -> Tuple[np.typing.NDArray, int]:
+        res = self.use_first_responding_url(
+            suffix="/generate",
+            method="POST",
+            json={
+                "text": text
+            })
+
+        return util.convertion.json_dict_to_ndarray(res["samples"]), int(res["rate"])
+
+
 class TextReader(object):
     """
     Reads a given text aloud using the Kokoro TTS engine.
@@ -165,4 +182,4 @@ if __name__ == "__main__":
     reader = TextReader()
 
     print("Generating...")
-    reader.read("Bonjour Delphine ! Comment vas-tu après avoir lamentablement exploité tes pauvres développeur ?", wait=True)
+    reader.read("Bonjour, comment allez vous ?", wait=True)

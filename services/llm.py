@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Iterator
 
 from ollama import Client, ChatResponse
 
-from config.util import Config
+from util.config import Config
 
 logger = logging.getLogger(__name__)
 

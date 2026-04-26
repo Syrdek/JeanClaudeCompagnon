@@ -8,7 +8,7 @@ from PIL import Image
 from mss import mss
 from mss.base import MSSBase
 
-from config.util import Config
+from util.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -19,16 +19,16 @@ class Screener(object):
     @staticmethod
     def from_config(config: Config) -> "Screener":
         logger.info("Creating screenshot maker")
-        return Screener(config("pixel_sensibility", default=0))
+        return Screener(config("full_screen_capture_threshold", default=0))
 
-    def __init__(self, pixel_sensibility=0):
+    def __init__(self, full_screen_capture_threshold=0):
         """
         Construct a Screener instance.
 
-        :param pixel_sensibility: minimum width and height (in pixels) below which a region is considered too small and the full display is captured instead.
+        :param full_screen_capture_threshold: minimum width and height (in pixels) below which a region is considered too small and the full display is captured instead.
         """
         self.last_region = None
-        self.pixel_sensibility = pixel_sensibility
+        self.full_screen_capture_threshold = full_screen_capture_threshold
 
 
     @staticmethod
@@ -75,7 +75,7 @@ class Screener(object):
         region["width"] = region["right"] - region["left"]
         region["height"] = region["bottom"] - region["top"]
 
-        if region["width"] < self.pixel_sensibility and region["height"] < self.pixel_sensibility:
+        if region["width"] < self.full_screen_capture_threshold and region["height"] < self.full_screen_capture_threshold:
             return Screener._get_full_display_size(screener)
         return region
 
@@ -96,5 +96,5 @@ class Screener(object):
 
 
 if __name__ == '__main__':
-    screen = Screener(pixel_sensibility=10)
+    screen = Screener(full_screen_capture_threshold=10)
     screen.screenshot((30, 30), (100, 100)).save("potion_craft.png")

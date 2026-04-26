@@ -62,19 +62,20 @@ class ScreenReader(object):
             logger.info("Extracting text...")
             texts = self.ocr.read(img)
 
-            for box, text in texts:
-                logger.info(f"Text extracted : {text}")
-                need_translate = not self.detector.is_target(text)
-                if need_translate:
-                    logger.info(f"Text needs to be translated")
-                    text = self.translator.translate(text)
-                    logger.info(f"Text translated : {text}")
-                logger.info(f"Generating samples...")
-                audio, rate = self.speaker.generate(text)
+            text = "\n\n".join([text.rstrip(" .") + "." for box, text in texts])
 
-                logger.info(f"Playing samples...")
-                self.overlay.play()
-                self.speaker.play(samples=audio, rate=rate, wait=True)
+            logger.info(f"Text extracted : {text}")
+            need_translate = not self.detector.is_target(text)
+            if need_translate:
+                logger.info(f"Text needs to be translated")
+                text = self.translator.translate(text)
+                logger.info(f"Text translated : {text}")
+            logger.info(f"Generating samples...")
+            audio, rate = self.speaker.generate(text)
+
+            logger.info(f"Playing samples...")
+            self.overlay.play()
+            self.speaker.play(samples=audio, rate=rate, wait=True)
 
             self.overlay.close()
             logger.info(f"Finished !")

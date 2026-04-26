@@ -4,7 +4,7 @@ from typing import List, Any
 
 from lingua.lingua import LanguageDetectorBuilder, Language, LanguageDetector
 
-from config.util import Config
+from util.config import Config
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ import numpy as np
 import sounddevice as sd
 import soundfile as sf
 
-from config.util import Config
+from util.config import Config
 
 
 class MicrophoneRecorder:

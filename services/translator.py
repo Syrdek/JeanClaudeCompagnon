@@ -3,7 +3,7 @@ import os
 
 import logging
 
-from config.util import Config
+from util.config import Config
 from services.llm import OllamaClient, LlmClient
 
 logger = logging.getLogger(__name__)

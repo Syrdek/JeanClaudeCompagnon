@@ -3,7 +3,7 @@ import os
 from typing import Dict, Any, List
 
 import jsonmerge
-import jsonref
+import pyjson5
 
 
 class Config(object):
@@ -16,7 +16,7 @@ class Config(object):
         :param configuration: The configurations to merge.
         """
         if not configuration:
-            configuration = ["default-config.json", "config.json"]
+            configuration = ["default-config.json5", "config.json5", "config.json"]
 
         if isinstance(configuration, Dict):
             self.data = configuration
@@ -26,7 +26,7 @@ class Config(object):
             for conf_file in configuration:
                 if os.path.exists(conf_file):
                     with open(conf_file, "r") as f:
-                        self.data = jsonmerge.merge(self.data, jsonref.load(f))
+                        self.data = jsonmerge.merge(self.data, pyjson5.load(f))
 
     def __iter__(self):
         """
@@ -60,6 +60,12 @@ class Config(object):
             return Config(res)
         return res
 
+    def keys(self) -> List[str]:
+        return list(self.data.keys())
+
+    def json(self, *args, **kwargs) -> str:
+        return json.dumps(self.data, *args, **kwargs)
+
     def __call__(self, *args: str, default: Any = None) -> Any:
         """
         Navigate through nested configuration values using a sequence of keys.
@@ -68,10 +74,10 @@ class Config(object):
         :param default: Default value to return if any key is absent.
         :return: The value found at the end of the path, or the default if a key is missing.
         """
-        d = self.data
+        not_found = object()
+        d = self
         for arg in args:
-            if arg in d:
-                d = d.get(arg)
-            else:
+            d = d.get(arg, not_found)
+            if d == not_found:
                 return default
         return d

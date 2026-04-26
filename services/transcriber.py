@@ -1,13 +1,16 @@
 import logging
 import abc
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 
 import numpy
 import torch
-from faster_whisper import WhisperModel
+from faster_whisper import WhisperModel, decode_audio
+from scipy.io.wavfile import read
 
-from config.util import Config
+import util.convertion
+from util.config import Config
+from util.retry import MultipleUrlRemote
 
 logger = logging.getLogger("transcriber")
 
@@ -28,8 +31,16 @@ class Transcriber(object, metaclass=abc.ABCMeta):
                 compute_type=config("compute_type", default="int8"),
                 download=config("download", default=True)
             )
+        elif trn_type == "remote":
+            return RemoteTranscriber(url=config("url", default="http://localhost:11111/stt"))
 
         raise AttributeError(f"Transcriber type not supported: {trn_type}")
+
+    @abc.abstractmethod
+    def transcribe( self, audio: str | Path | numpy.ndarray, language: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Transcrit un fichier audio ou un numpy array audio mono float32 16 kHz.
+        """
 
 
 class FasterWhisperTranscriber(Transcriber):
@@ -73,7 +84,7 @@ class FasterWhisperTranscriber(Transcriber):
         word_timestamps: bool = True,
         min_silence_duration_ms: int = 500,
         condition_on_previous_text: bool = False,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """
         Transcrit un fichier audio ou un numpy array audio mono float32 16 kHz.
 
@@ -139,6 +150,26 @@ class FasterWhisperTranscriber(Transcriber):
             "text": " ".join(full_text).strip(),
             "segments": result_segments,
         }
+
+
+class RemoteTranscriber(MultipleUrlRemote, Transcriber):
+
+    def transcribe(self,
+                   audio: str | numpy.ndarray,
+                   language: Optional[str] = None) -> Dict[str, Any]:
+        if not isinstance(audio, numpy.ndarray):
+            audio = decode_audio(audio)
+
+        params: Dict[str, Any] = {
+            "audio": util.convertion.ndarray_to_json_dict(audio)
+        }
+
+        if language:
+            params["language"] = language
+
+        return self.use_first_responding_url(suffix="/transcribe",
+                                             method="POST",
+                                             json=params)
 
 
 if __name__ == "__main__":
