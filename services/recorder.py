@@ -7,11 +7,30 @@ import numpy as np
 import sounddevice as sd
 import soundfile as sf
 
+from config.util import Config
+
 
 class MicrophoneRecorder:
     """
     Capture audio depuis le micro avec start()/stop().
     """
+
+    @staticmethod
+    def from_config(config: Config) -> "MicrophoneRecorder":
+        """
+        Configures an instance.
+        :param config: The configuration to use.
+        :return: The configured instance.
+        """
+        logging.info("Creating audio recorder")
+
+        return MicrophoneRecorder(
+            sample_rate=config("sample-rate", default=16000),
+            channels=config("channels", default=1),
+            dtype=config("dtype", default="float32"),
+            device=config("device", default=None),
+            blocksize=config("blocksize", default=1024),
+        )
 
     def __init__(
         self,

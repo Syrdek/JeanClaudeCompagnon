@@ -2,6 +2,8 @@ soundfile
 sounddevice
 pynput
 pillow
+numpy
+torch
 mss
 easyocr
 lingua-language-detector
@@ -9,5 +11,9 @@ argostranslate
 omnivoice
 PySide6
 jsonmerge
+jsonref
+addict
 ollama
 faster-whisper
+werkzeug
+flask

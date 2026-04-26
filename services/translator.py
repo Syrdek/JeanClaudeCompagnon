@@ -3,13 +3,32 @@ import os
 
 import logging
 
-from services.ollama_llm import OllamaClient
+from config.util import Config
+from services.llm import OllamaClient, LlmClient
 
+logger = logging.getLogger(__name__)
 
 class Translator(object, metaclass=abc.ABCMeta):
     """
     Abstract base class for text translators.
     """
+    @staticmethod
+    def from_config(config: Config, llm: LlmClient) -> "Screener":
+        logger.info("Creating translator")
+        trn_type = config.get("type", default="argos")
+
+        if trn_type == "argos":
+            return ArgosTranslator(
+                target_language=config("target", default="fra"),
+                source_language=config("target", default="eng"),
+                model_dir=config("model_path", default="models/argos"),
+            )
+        elif trn_type == "llm":
+            return LlmTranslator(llm,
+                                 model=config("model"),
+                                 prompt=config("prompt"))
+
+        raise AttributeError(f"Translator type not supported: {trn_type}")
 
     @abc.abstractmethod
     def translate(self, text: str) -> str:
@@ -78,17 +97,17 @@ class LlmTranslator(Translator):
     """
     Uses an LLM to translate text.
     """
-    client: OllamaClient
+    client: LlmClient
 
-    def __init__(self, ollama_client: OllamaClient, model: str = "gemma4:4b", prompt: str = "[TEXT]") -> None:
+    def __init__(self, llm_client: LlmClient, model: str = "gemma4:4b", prompt: str = "[TEXT]") -> None:
         """
         Construct an LlmTranslator.
 
-        :param ollama_client: The Ollama client to use for translation requests.
+        :param llm_client: The LLM client to use for translation requests.
         :param model: Name of the model to use for translation.
         :param prompt: Prompt template containing "[TEXT]" as a placeholder for the input text.
         """
-        self.client = ollama_client
+        self.client = llm_client
         self.prompt = prompt
         self.model = model
 

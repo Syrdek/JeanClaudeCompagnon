@@ -1,4 +1,5 @@
 import logging
+import abc
 from pathlib import Path
 from typing import Optional
 
@@ -6,9 +7,32 @@ import numpy
 import torch
 from faster_whisper import WhisperModel
 
+from config.util import Config
+
 logger = logging.getLogger("transcriber")
 
-class FasterWhisperTranscriber(object):
+class Transcriber(object, metaclass=abc.ABCMeta):
+    """
+    Abstract base class for sound transcribers.
+    """
+    @staticmethod
+    def from_config(config: Config) -> "Transcriber":
+        logger.info("Creating transcriber")
+        trn_type = config.get("type", default="faster-whisper")
+
+        if trn_type == "faster-whisper":
+            return FasterWhisperTranscriber(
+                model_name=config("model", default="small"),
+                model_dir=config("model_path", default="models/faster-whisper"),
+                device=config("device", default="auto"),
+                compute_type=config("compute_type", default="int8"),
+                download=config("download", default=True)
+            )
+
+        raise AttributeError(f"Transcriber type not supported: {trn_type}")
+
+
+class FasterWhisperTranscriber(Transcriber):
     """
     Gère le téléchargement/localisation du modèle faster-whisper
     et la transcription d'un audio numpy ou d'un fichier audio.

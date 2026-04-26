@@ -1,9 +1,55 @@
+import abc
+import logging
 from typing import List, Dict, Any, Iterator
 
 from ollama import Client, ChatResponse
 
+from config.util import Config
 
-class OllamaClient(object):
+logger = logging.getLogger(__name__)
+
+class LlmClient(Client, metaclass=abc.ABCMeta):
+
+    @staticmethod
+    def from_config(config: Config) -> "LlmClient":
+        logger.info("Creating llm client")
+        llm_type = config("type", default="ollama")
+        if llm_type == "ollama":
+            return OllamaClient(
+                url=config("url"),
+                api_key=config("key", default=""),
+                system_prompt=config("system-prompt", default=None),
+                max_history=config("max-history", default=20),
+                default_model=config("model", default=None),
+            )
+
+        raise AttributeError(f"LLM type not supported : {llm_type}.")
+
+    @abc.abstractmethod
+    def history_add(self, content: str, role: str = "assistant", **kwargs):
+        """
+        Append a message to the conversation history.
+
+        :param content: The text content of the message.
+        :param role: The role of the message sender (e.g. "assistant", "user").
+        """
+
+    @abc.abstractmethod
+    def request(self, message: str = None, model: str = None, **kwargs) -> ChatResponse:
+        """
+        Send a chat request to the Llm API.
+
+        Automatically manages conversation history and optional system prompt.
+
+        :param model: Name of the model to use for the chat.
+        :param message: Optional user message to add before sending the request.
+        :param kwargs: Additional keyword arguments forwarded to the underlying client.
+        :return: The chat response returned by the API.
+        """
+
+
+
+class OllamaClient(LlmClient):
     """
     Client for interacting with an Ollama-compatible chat API.
     """
@@ -22,6 +68,8 @@ class OllamaClient(object):
         :param system_prompt: Optional system prompt to prepend to every request.
         :param max_history: Maximum number of messages to retain in the conversation history.
         """
+        super().__init__()
+
         kwargs = {}
         if api_key:
             kwargs["headers"] = {"Authorization": "Bearer " + api_key}

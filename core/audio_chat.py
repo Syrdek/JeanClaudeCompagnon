@@ -2,7 +2,7 @@ import logging
 import os.path
 import threading
 
-from services.ollama_llm import OllamaClient
+from services.llm import OllamaClient, LlmClient
 from services.recorder import MicrophoneRecorder
 from services.speaker import TTS, TextReader
 from services.transcriber import FasterWhisperTranscriber
@@ -17,7 +17,7 @@ class AudioChat(object):
     def __init__(self,
                  recorder: MicrophoneRecorder,
                  stt: FasterWhisperTranscriber,
-                 llm: OllamaClient,
+                 llm: LlmClient,
                  speaker: TextReader,
                  processing_ui: ProcessingOverlayBridge):
         self.recorder = recorder

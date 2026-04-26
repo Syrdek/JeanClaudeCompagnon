@@ -3,6 +3,8 @@ import os
 from typing import Dict, Any, List
 
 import jsonmerge
+import jsonref
+
 
 class Config(object):
     """
@@ -24,7 +26,7 @@ class Config(object):
             for conf_file in configuration:
                 if os.path.exists(conf_file):
                     with open(conf_file, "r") as f:
-                        self.data = jsonmerge.merge(self.data, json.load(f))
+                        self.data = jsonmerge.merge(self.data, jsonref.load(f))
 
     def __iter__(self):
         """

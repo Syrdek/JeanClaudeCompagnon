@@ -1,4 +1,5 @@
 import abc
+import logging
 import os
 from abc import ABCMeta
 from queue import Queue
@@ -9,15 +10,27 @@ import sounddevice
 import torch
 from omnivoice import OmniVoice
 
+from config.util import Config
 
+logger = logging.getLogger(__name__)
 
 class TTS(object, metaclass=ABCMeta):
     """
     Abstract base class for text-to-speech engines.
     """
+    @staticmethod
+    def from_config(config: Config) -> "TTS":
+        logger.info("Creating text to speech reader")
+        spk_type = config("type", default="omnivoice")
+        if spk_type == "omnivoice":
+            return OmnivoiceTTS(model_path=config("model_path", default=None),
+                               ref_voice_path=config("ref_voice_path", default=None),
+                               ref_voice_text=config("ref_voice_text", default=None),
+                               repo_id=config("repo_id", default="k2-fsa/OmniVoice"),
+                               device=config("device", default="auto"),
+                               download=config("download", default=True))
 
-    def __init__(self):
-        pass
+        raise AttributeError(f"TTS type not supported: {spk_type}")
 
     @abc.abstractmethod
     def generate(self, text: str):

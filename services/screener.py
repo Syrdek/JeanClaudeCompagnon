@@ -1,7 +1,6 @@
 
 
 import logging
-import threading
 import typing
 from typing import Tuple, NoReturn
 
@@ -9,11 +8,18 @@ from PIL import Image
 from mss import mss
 from mss.base import MSSBase
 
+from config.util import Config
+
+logger = logging.getLogger(__name__)
 
 class Screener(object):
     """
     Captures screenshots of the entire display or a specific region.
     """
+    @staticmethod
+    def from_config(config: Config) -> "Screener":
+        logger.info("Creating screenshot maker")
+        return Screener(config("pixel_sensibility", default=0))
 
     def __init__(self, pixel_sensibility=0):
         """
