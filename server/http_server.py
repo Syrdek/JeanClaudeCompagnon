@@ -20,9 +20,18 @@ from util.config import Config
 logger = logging.getLogger(__name__)
 
 class HttpServer(threading.Thread):
+    """
+    HTTP server that exposes OCR, TTS, and STT services via Flask.
+    """
 
     @staticmethod
     def from_config(conf: Config):
+        """
+        Create an HttpServer from a configuration object.
+
+        :param conf: Configuration object containing host, port, and services.
+        :return: A configured HttpServer instance.
+        """
         return HttpServer(host=conf("host", default="localhost"),
                           port=conf("port", default=11111),
                           services=conf("services", default=[]))
@@ -34,6 +43,13 @@ class HttpServer(threading.Thread):
                  services: Dict[str, Any],
                  host: str = "127.0.0.1",
                  port: int = 11111):
+        """
+        Construct an HttpServer and register service endpoints.
+
+        :param services: Dictionary of service configurations keyed by service name.
+        :param host: Host address to bind the server to.
+        :param port: Port number to listen on.
+        """
 
         super().__init__(daemon=True)
         logger.info(f"Creating server on {host}:{port} for services {[s for s in services.keys()]}")
@@ -62,13 +78,24 @@ class HttpServer(threading.Thread):
                 logger.warning(f"Unknown service name : {service_name}")
 
     def list_services(self):
+        """
+        Return the list of registered services as a JSON response.
+
+        :return: Flask JSON response with the service configurations.
+        """
         return flask.Response(status=200, content_type="application/json", response=self.services.json())
 
     def run(self):
+        """
+        Start the HTTP server and serve requests indefinitely.
+        """
         logger.info(f"Starting server")
         self.server.serve_forever()
 
     def stop(self):
+        """
+        Stop the HTTP server.
+        """
         logger.info(f"Stopping server")
         self.server.shutdown()
 

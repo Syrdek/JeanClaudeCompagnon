@@ -39,14 +39,14 @@ class Transcriber(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def transcribe( self, audio: str | Path | numpy.ndarray, language: Optional[str] = None) -> Dict[str, Any]:
         """
-        Transcrit un fichier audio ou un numpy array audio mono float32 16 kHz.
+        Transcribe an audio file or a mono float32 numpy array at 16 kHz.
         """
 
 
 class FasterWhisperTranscriber(Transcriber):
     """
-    Gère le téléchargement/localisation du modèle faster-whisper
-    et la transcription d'un audio numpy ou d'un fichier audio.
+    Manages downloading/locating the faster-whisper model
+    and transcribing a numpy audio array or an audio file.
     """
 
     def __init__(
@@ -86,9 +86,9 @@ class FasterWhisperTranscriber(Transcriber):
         condition_on_previous_text: bool = False,
     ) -> Dict[str, Any]:
         """
-        Transcrit un fichier audio ou un numpy array audio mono float32 16 kHz.
+        Transcribe an audio file or a mono float32 numpy array at 16 kHz.
 
-        Retourne un dict contenant :
+        Returns a dict containing:
         - language
         - language_probability
         - segments

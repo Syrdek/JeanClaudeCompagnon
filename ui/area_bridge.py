@@ -12,7 +12,7 @@ logger = logging.getLogger("bridge.area")
 
 class AreaSelectionOverlayBridge(QObject):
     """
-    Links the Qt application with python script.
+    Bridges the Qt area selection overlay with the screen reader.
     """
     __open_signal = Signal()
     __overlay: AreaSelectionOverlay | None = None
@@ -20,7 +20,8 @@ class AreaSelectionOverlayBridge(QObject):
 
     def __init__(self, reader: ScreenReader, hook: InputHook):
         """
-        Construct a AreaSelectionOverlayBridge.
+        Construct an AreaSelectionOverlayBridge.
+
         :param reader: The screenshot reader utility.
         :param hook: The hook to use to collect mouse positions.
         """

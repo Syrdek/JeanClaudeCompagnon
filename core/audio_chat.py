@@ -11,8 +11,11 @@ from ui.processing_bridge import ProcessingOverlayBridge
 logger = logging.getLogger("core.audio_chat")
 
 class AudioChat(object):
+    """
+    Manages voice chat interactions: records audio, transcribes it,
+    sends the text to an LLM, and plays back the synthesized response.
+    """
     _lock = threading.RLock()
-
 
     def __init__(self,
                  recorder: MicrophoneRecorder,
@@ -20,6 +23,15 @@ class AudioChat(object):
                  llm: LlmClient,
                  speaker: TextReader,
                  processing_ui: ProcessingOverlayBridge):
+        """
+        Construct an AudioChat.
+
+        :param recorder: Microphone recorder for capturing audio input.
+        :param stt: Speech-to-text transcriber.
+        :param llm: LLM client for generating responses.
+        :param speaker: Text-to-speech reader for audio output.
+        :param processing_ui: Processing overlay UI bridge for status feedback.
+        """
         self.recorder = recorder
         self.stt = stt
         self.llm = llm
@@ -28,6 +40,9 @@ class AudioChat(object):
         self.recording = False
 
     def switch(self):
+        """
+        Toggle the recording state between started and stopped.
+        """
         logger.info("Switched recording")
         with self._lock:
             if self.recording:
@@ -36,6 +51,9 @@ class AudioChat(object):
                 self.start_recording()
 
     def start_recording(self):
+        """
+        Start recording audio from the microphone.
+        """
         logger.info("Start recording")
         with self._lock:
             if self.recording:
@@ -46,6 +64,9 @@ class AudioChat(object):
             self.recorder.start()
 
     def stop_recording(self):
+        """
+        Stop recording, then transcribe, query the LLM, and play the response.
+        """
         logger.info("Stop recording")
         with self._lock:
             if not self.recording:

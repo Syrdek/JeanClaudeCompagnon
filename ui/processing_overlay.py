@@ -8,6 +8,14 @@ from PySide6.QtWidgets import QApplication, QWidget
 
 
 def _mix_colors(color1: QColor, color2: QColor, ratio: float) -> QColor:
+    """
+    Blend two QColor objects using the given ratio.
+
+    :param color1: The first color.
+    :param color2: The second color.
+    :param ratio: Blend ratio between 0.0 and 1.0.
+    :return: The interpolated QColor.
+    """
     ratio = max(0.0, min(1.0, ratio))
     inv = 1.0 - ratio
     return QColor(

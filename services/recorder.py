@@ -12,7 +12,7 @@ from util.config import Config
 
 class MicrophoneRecorder:
     """
-    Capture audio depuis le micro avec start()/stop().
+    Captures audio from the microphone using start() and stop().
     """
 
     @staticmethod
@@ -65,10 +65,10 @@ class MicrophoneRecorder:
 
     def start(self) -> None:
         """
-        Démarre la capture micro.
+        Starts microphone capture.
         """
         if self._is_recording:
-            raise RuntimeError("L'enregistrement est déjà en cours.")
+            raise RuntimeError("Recording is already in progress.")
 
         with self._lock:
             self._frames = []
@@ -86,10 +86,10 @@ class MicrophoneRecorder:
 
     def stop(self) -> np.ndarray:
         """
-        Arrête la capture et retourne l'audio sous forme de numpy array mono float32.
+        Stops capture and returns the audio as a mono float32 numpy array.
         """
         if not self._is_recording:
-            raise RuntimeError("Aucun enregistrement en cours.")
+            raise RuntimeError("No recording is in progress.")
 
         self._is_recording = False
 

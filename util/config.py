@@ -61,9 +61,21 @@ class Config(object):
         return res
 
     def keys(self) -> List[str]:
+        """
+        Return the list of top-level configuration keys.
+
+        :return: List of key names.
+        """
         return list(self.data.keys())
 
     def json(self, *args, **kwargs) -> str:
+        """
+        Serialize the configuration data to a JSON string.
+
+        :param args: Positional arguments forwarded to json.dumps.
+        :param kwargs: Keyword arguments forwarded to json.dumps.
+        :return: JSON string representation of the configuration.
+        """
         return json.dumps(self.data, *args, **kwargs)
 
     def __call__(self, *args: str, default: Any = None) -> Any:

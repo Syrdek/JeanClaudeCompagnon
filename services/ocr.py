@@ -91,7 +91,18 @@ class EasyOcr(object):
 
 
 class RemoteOcr(MultipleUrlRemote, Ocr):
+    """
+    OCR client that delegates text extraction to a remote HTTP server.
+    """
+
     def read(self, img: str | Image, **kwargs) -> Any:
+        """
+        Extract text from the given image using a remote OCR service.
+
+        :param img: Image to process (file path string or PIL Image).
+        :param kwargs: Additional keyword arguments forwarded to the remote endpoint.
+        :return: List of detected text regions with bounding boxes and text.
+        """
         if isinstance(img, str):
             with PIL.Image.open(img) as f:
                 img_b64 = util.convertion.pil_to_base64(f)
