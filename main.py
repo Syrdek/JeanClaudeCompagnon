@@ -1,5 +1,8 @@
+import json
 import logging
+import logging.config
 import sys
+from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
@@ -74,8 +77,6 @@ def main():
     # Start listening for keyboard events.
     hook.start()
 
-    logging.info("Ready !")
-
     # System tray integration with area_bridge.show as the activation callback.
     tray_app = TrayApp(app=app, read_callback=area_bridge.show)
 
@@ -83,6 +84,8 @@ def main():
     if config("expose", "enabled", default=False):
         server = HttpServer.from_config(config("expose"))
         server.start()
+
+    logging.info("Ready !")
 
     # Enter the Qt event loop; will block until the application exits.
     sys.exit(app.exec())
@@ -134,7 +137,12 @@ def create_input_listener() -> InputHook:
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    config_path = Path(__file__).with_name("logging.json")
+
+    with config_path.open("r", encoding="utf-8") as f:
+        config = json.load(f)
+
+    logging.config.dictConfig(config)
     logging.getLogger("argostranslate.utils").setLevel(logging.WARNING)
 
     config = Config()

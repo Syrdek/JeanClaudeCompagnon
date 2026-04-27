@@ -186,7 +186,9 @@ models/easy_ocr
 models/kokoro
 models
 tests
+voix
 
 .idea
 /config.json5
 /config.json
+jean-claude.log

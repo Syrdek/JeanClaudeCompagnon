@@ -1,5 +1,7 @@
 $ErrorActionPreference = "Stop"
 
+Set-Location $PSScriptRoot
+
 function Write-Step {
     param([string]$Message)
     Write-Host "`n=== $Message ===" -ForegroundColor Cyan
@@ -61,10 +63,45 @@ function Get-PyTorchIndexUrl {
     }
 }
 
+function Test-Python312Installed {
+    try {
+        $output = & py -3.12 --version 2>&1 | Out-String
+        return ($LASTEXITCODE -eq 0 -and $output -match '^Python 3\.12(\.\d+)?')
+    } catch {
+        return $false
+    }
+}
+
+function Install-Python312 {
+    Write-Step "Vérification de Python 3.12"
+
+    if (Test-Python312Installed) {
+        Write-Host "Python 3.12 est déjà installé."
+        return
+    }
+
+    Write-Host "Python 3.12 non détecté. Installation en cours..."
+
+    $winget = Get-Command winget -ErrorAction SilentlyContinue
+    if (-not $winget) {
+        throw "winget est introuvable. Impossible d'installer automatiquement Python 3.12."
+    }
+
+    & winget install -e --id Python.Python.3.12 --accept-package-agreements --accept-source-agreements
+
+    if (-not (Test-Python312Installed)) {
+        throw "Python 3.12 n'a pas été détecté après l'installation."
+    }
+
+    Write-Host "Python 3.12 installé avec succès."
+}
+
+Install-Python312
+
 Write-Step "Vérification / création du virtualenv"
 if (-not (Test-Path ".venv")) {
     Write-Host "Création de .venv..."
-    py -m venv .venv
+    py -3.12 -m venv .venv
 } else {
     Write-Host ".venv existe déjà."
 }
@@ -111,6 +148,27 @@ if (-not (Test-Path "models")) {
     Write-Host "Dossier models créé."
 } else {
     Write-Host "Le dossier models existe déjà."
+}
+
+Write-Step "Création du lancement automatique au démarrage de session"
+$startupFolder = [Environment]::GetFolderPath("Startup")
+$runScriptPath = Join-Path $PSScriptRoot "run.ps1"
+$batPath = Join-Path $startupFolder "JeanClaudeCompagnon.bat"
+
+if (-not (Test-Path $runScriptPath)) {
+    throw "Script run.ps1 introuvable: $runScriptPath"
+}
+
+if (Test-Path $batPath) {
+    Write-Host "Le fichier existe déjà, aucune modification: $batPath" -ForegroundColor Yellow
+} else {
+    $batContent = @"
+@echo off
+powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$runScriptPath"
+"@
+
+    Set-Content -Path $batPath -Value $batContent -Encoding ASCII
+    Write-Host "Fichier de démarrage créé: $batPath"
 }
 
 Write-Step "Terminé"
