@@ -16,4 +16,4 @@ if (-not (Test-Path $activateScript)) {
 
 Write-Step "Lancement de l'application Python"
 
-python main.py
+pythonw main.py

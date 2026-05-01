@@ -49,16 +49,16 @@ function Get-PyTorchIndexUrl {
     switch -Regex ($majorMinor) {
         '^13\.0' { return 'https://download.pytorch.org/whl/cu130' }
         '^12\.8' { return 'https://download.pytorch.org/whl/cu128' }
-        '^12\.7' { return 'https://download.pytorch.org/whl/cu126' } # fallback vers la plus proche supportée
+        '^12\.7' { return 'https://download.pytorch.org/whl/cu126' }
         '^12\.6' { return 'https://download.pytorch.org/whl/cu126' }
-        '^12\.5' { return 'https://download.pytorch.org/whl/cu124' } # fallback
+        '^12\.5' { return 'https://download.pytorch.org/whl/cu124' }
         '^12\.4' { return 'https://download.pytorch.org/whl/cu124' }
-        '^12\.3' { return 'https://download.pytorch.org/whl/cu124' } # fallback
-        '^12\.2' { return 'https://download.pytorch.org/whl/cu121' } # fallback ancien support
+        '^12\.3' { return 'https://download.pytorch.org/whl/cu124' }
+        '^12\.2' { return 'https://download.pytorch.org/whl/cu121' }
         '^12\.1' { return 'https://download.pytorch.org/whl/cu121' }
-        '^12\.0' { return 'https://download.pytorch.org/whl/cu121' } # fallback
+        '^12\.0' { return 'https://download.pytorch.org/whl/cu121' }
         '^11\.8' { return 'https://download.pytorch.org/whl/cu118' }
-        '^11\.[0-7]' { return 'https://download.pytorch.org/whl/cu118' } # fallback moderne le plus proche encore courant
+        '^11\.[0-7]' { return 'https://download.pytorch.org/whl/cu118' }
         default { return $null }
     }
 }
@@ -94,6 +94,55 @@ function Install-Python312 {
     }
 
     Write-Host "Python 3.12 installé avec succès."
+}
+
+function New-StartupShortcut {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ShortcutPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RunScriptPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$WorkingDirectory
+    )
+
+    $powershellExe = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    $arguments = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}"' -f $RunScriptPath
+
+    $wshShell = New-Object -ComObject WScript.Shell
+    $shortcut = $wshShell.CreateShortcut($ShortcutPath)
+    $shortcut.TargetPath = $powershellExe
+    $shortcut.Arguments = $arguments
+    $shortcut.WorkingDirectory = $WorkingDirectory
+    $shortcut.IconLocation = "$powershellExe,0"
+    $shortcut.Save()
+}
+
+function Ask-YesNo {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Question
+    )
+
+    while ($true) {
+        $response = Read-Host "$Question [O/N]"
+        if ($null -eq $response) {
+            continue
+        }
+
+        switch ($response.Trim().ToLowerInvariant()) {
+            'o' { return $true }
+            'oui' { return $true }
+            'y' { return $true }
+            'yes' { return $true }
+            'n' { return $false }
+            'non' { return $false }
+            'no' { return $false }
+            default { Write-Host "Réponse invalide. Merci de répondre par O ou N." -ForegroundColor Yellow }
+        }
+    }
 }
 
 Install-Python312
@@ -150,25 +199,38 @@ if (-not (Test-Path "models")) {
     Write-Host "Le dossier models existe déjà."
 }
 
-Write-Step "Création du lancement automatique au démarrage de session"
+Write-Step "Configuration du lancement automatique au démarrage de session"
 $startupFolder = [Environment]::GetFolderPath("Startup")
 $runScriptPath = Join-Path $PSScriptRoot "run.ps1"
-$batPath = Join-Path $startupFolder "JeanClaudeCompagnon.bat"
+$shortcutPath = Join-Path $startupFolder "JeanClaudeCompagnon.lnk"
+$legacyBatPath = Join-Path $startupFolder "JeanClaudeCompagnon.bat"
 
 if (-not (Test-Path $runScriptPath)) {
     throw "Script run.ps1 introuvable: $runScriptPath"
 }
 
-if (Test-Path $batPath) {
-    Write-Host "Le fichier existe déjà, aucune modification: $batPath" -ForegroundColor Yellow
-} else {
-    $batContent = @"
-@echo off
-powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$runScriptPath"
-"@
+$enableStartup = Ask-YesNo "Souhaitez-vous lancer l'application automatiquement au démarrage de votre session Windows ?"
 
-    Set-Content -Path $batPath -Value $batContent -Encoding ASCII
-    Write-Host "Fichier de démarrage créé: $batPath"
+if ($enableStartup) {
+    if (Test-Path $legacyBatPath) {
+        Remove-Item $legacyBatPath -Force
+        Write-Host "Ancien fichier .bat supprimé: $legacyBatPath"
+    }
+
+    New-StartupShortcut -ShortcutPath $shortcutPath -RunScriptPath $runScriptPath -WorkingDirectory $PSScriptRoot
+    Write-Host "Raccourci de démarrage créé ou mis à jour: $shortcutPath"
+} else {
+    if (Test-Path $shortcutPath) {
+        Remove-Item $shortcutPath -Force
+        Write-Host "Raccourci de démarrage supprimé: $shortcutPath"
+    } else {
+        Write-Host "Aucun raccourci de démarrage créé."
+    }
+
+    if (Test-Path $legacyBatPath) {
+        Remove-Item $legacyBatPath -Force
+        Write-Host "Ancien fichier .bat supprimé: $legacyBatPath"
+    }
 }
 
 Write-Step "Terminé"
