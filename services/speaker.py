@@ -178,8 +178,17 @@ class TextReader(object):
 
 
 if __name__ == "__main__":
+    tts = TTS.from_config(Config({
+        "type": "omnivoice",
+        "model_path": "models/OmniVoice",
+        "ref_voice_path": "voix/jroberts.wav",
+        "ref_voice_text": "C'est une comédienne magnifique, en plus elle a eu une étendue de jeu, une palette de jeux assez importante et non c'est très très agréable de la retrouver à chaque fois.",
+        "repo_id": "k2-fsa/OmniVoice",
+        "device": "auto",
+        "download": False
+      }))
     print("Loading...")
-    reader = TextReader()
+    reader = TextReader(tts=tts)
 
     print("Generating...")
     reader.read("Bonjour, comment allez vous ?", wait=True)

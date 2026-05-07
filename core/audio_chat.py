@@ -6,7 +6,7 @@ from services.llm import OllamaClient, LlmClient
 from services.recorder import MicrophoneRecorder
 from services.speaker import TTS, TextReader
 from services.transcriber import FasterWhisperTranscriber
-from ui.processing_bridge import ProcessingOverlayBridge
+from ui.processing_overlay import ProcessingOverlayBridge
 
 logger = logging.getLogger("core.audio_chat")
 
@@ -39,7 +39,7 @@ class AudioChat(object):
         self.overlay = processing_ui
         self.recording = False
 
-    def switch(self):
+    def switch(self, *args):
         """
         Toggle the recording state between started and stopped.
         """
@@ -63,7 +63,7 @@ class AudioChat(object):
             self.overlay.wait()
             self.recorder.start()
 
-    def stop_recording(self):
+    def stop_recording(self, cancel: bool = False):
         """
         Stop recording, then transcribe, query the LLM, and play the response.
         """
@@ -74,24 +74,31 @@ class AudioChat(object):
 
             self.recording = False
 
-        self.overlay.load()
-
-        logger.info(f"Collecting text...")
+        logger.info(f"Stop recording...")
         audio_array = self.recorder.stop()
         if os.path.isdir("tests"):
             self.recorder.save("tests/audio.wav", audio_array)
-        #audio_array = "tests/audio.wav"
+
+        if cancel:
+            logger.info(f"Operation was cancelled")
+            self.overlay.close()
+            return
+
+        self.overlay.load()
 
         logger.info(f"Transcribing...")
         text = self.stt.transcribe(audio_array)["text"]
 
-        logger.info(f"Asking LLM : {text}...")
-        response = self.llm.request(message=text)
+        if text:
+            logger.info(f"Asking LLM : {text}...")
+            response = self.llm.request(message=text)
 
-        logger.info(f"Generating samples for response: {response.message.content}...")
-        audio, rate = self.speaker.generate(response.message.content)
+            logger.info(f"Generating samples for response: {response.message.content}...")
+            audio, rate = self.speaker.generate(response.message.content)
 
-        logger.info(f"Playing samples...")
-        self.overlay.play()
-        self.speaker.play(samples=audio, rate=rate, wait=True)
-        self.overlay.close()
+            logger.info(f"Playing samples...")
+            self.overlay.play()
+            self.speaker.play(samples=audio, rate=rate, wait=True)
+            self.overlay.close()
+        else:
+            logger.info(f"No text was transcribed")

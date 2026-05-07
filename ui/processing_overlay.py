@@ -1,11 +1,18 @@
+import logging
 import math
 import sys
+from threading import RLock
+from typing import Literal, Callable
 
-from PySide6.QtGui import QPaintEvent, QIcon
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QPaintEvent, QIcon, QKeyEvent
+from PySide6.QtCore import Qt, QTimer, Signal, QObject
 from PySide6.QtGui import QPainter, QColor
 from PySide6.QtWidgets import QApplication, QWidget
 
+
+logger = logging.getLogger("ui.processing")
+
+type ProcessingOverlayAction = Literal["wait", "play", "close"]
 
 def _mix_colors(color1: QColor, color2: QColor, ratio: float) -> QColor:
     """
@@ -60,6 +67,7 @@ class ProcessingOverlay(QWidget):
         screen = QApplication.primaryScreen().geometry()
         self.setGeometry(int((screen.width() - width)/2), screen.y(), width, height)
         self.setFixedHeight(height)
+        self.cancel_callback = None
 
         # Animation timer (~60 FPS)
         self._timer = QTimer(self)
@@ -71,6 +79,8 @@ class ProcessingOverlay(QWidget):
         self._bar_color = self._normalize_color(bar_color)
 
         self.paintAnimation = None
+
+        self.setWindowIcon(QIcon("icon.ico"))
         self.set_waiting()
 
     def set_loading(self):
@@ -99,6 +109,20 @@ class ProcessingOverlay(QWidget):
     def bar_color(self, value: QColor | tuple[int, int, int] | tuple[int, int, int, int]) -> None:
         self._bar_color = self._normalize_color(value)
         self.update()
+
+    def on_cancel(self, callback: Callable[[], None]):
+        self.cancel_callback = callback
+
+    def keyPressEvent(self, event : QKeyEvent) -> None:
+        """
+        Exits on escape key
+
+        :param event: The keyboard event.
+        """
+        if event.key() == Qt.Key_Escape:
+            if self.cancel_callback:
+                self.cancel_callback()
+            self.close()
 
     def _normalize_color(self, value: QColor | list[int] | tuple[int, int, int] | tuple[int, int, int, int]) -> QColor:
         """
@@ -315,6 +339,101 @@ class ProcessingOverlay(QWidget):
             )
 
         painter.end()
+
+
+
+class ProcessingOverlayBridge(QObject):
+    """
+    Links the Qt application with python script.
+    """
+    __lock = RLock()
+    __wait_signal = Signal()
+    __load_signal = Signal()
+    __play_signal = Signal()
+    __close_signal = Signal()
+    __overlay: ProcessingOverlay | None = None
+
+    def __init__(self, **kwargs):
+        """
+        Construct a ProcessingOverlayBridge.
+        """
+        super().__init__()
+        self.__overlay = None
+        self.__wait_signal.connect(self.__qt_wait)
+        self.__load_signal.connect(self.__qt_load)
+        self.__play_signal.connect(self.__qt_play)
+        self.__close_signal.connect(self.__qt_close)
+        self.overlay_kwargs = kwargs
+
+    def __ensure_overlay(self) -> ProcessingOverlay:
+        """
+        Ensures the overlay is set up.
+        :return: The overlay.
+        """
+        with self.__lock:
+            if self.__overlay is None:
+                self.__overlay = ProcessingOverlay(**self.overlay_kwargs)
+                self.__overlay.show()
+            return self.__overlay
+
+    def __qt_wait(self) -> None:
+        """
+        Set the overlay to wait mode on the Qt thread.
+        """
+        logger.info("Setting processing overlay to wait...")
+        self.__ensure_overlay().set_waiting()
+
+    def __qt_load(self) -> None:
+        """
+        Set the overlay to loading mode on the Qt thread.
+        """
+        logger.info("Setting processing overlay to load...")
+        self.__ensure_overlay().set_loading()
+
+    def __qt_play(self) -> None:
+        """
+        Set the overlay to play mode on the Qt thread.
+        """
+        logger.info("Setting processing overlay to play...")
+        self.__ensure_overlay().set_playing()
+
+    def __qt_close(self) -> None:
+        """
+        Close the overlay on the Qt thread.
+        """
+        logger.info("Closing processing overlay...")
+        if self.__overlay is not None:
+            self.__overlay.close()
+            self.__overlay = None
+
+    def wait(self, *args):
+        """
+        Display the overlay on the screen in wait mode.
+        :param args: Any arguments (ignored).
+        """
+        self.__wait_signal.emit()
+
+    def load(self, *args):
+        """
+        Display the overlay on the screen in load mode.
+        :param args: Any arguments (ignored).
+        """
+        self.__load_signal.emit()
+
+    def play(self, *args):
+        """
+        Display the overlay on the screen in play mode.
+        :param args: Any arguments (ignored).
+        """
+        self.__play_signal.emit()
+
+    def close(self, *args):
+        """
+        Closes the overlay.
+        :param args: Any arguments (ignored).
+        """
+        self.__close_signal.emit()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

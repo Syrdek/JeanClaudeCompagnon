@@ -9,7 +9,7 @@ from services.screener import Screener
 from services.speaker import TextReader
 
 from services.translator import Translator
-from ui.processing_bridge import ProcessingOverlayBridge
+from ui.processing_overlay import ProcessingOverlayBridge
 
 logger = logging.getLogger("screen_reader")
 

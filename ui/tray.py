@@ -15,13 +15,11 @@ class TrayApp:
     """
 
     def __init__(self,
-                 app: QApplication,
-                 read_callback: Callable[[], None]):
+                 app: QApplication):
         """
         Construct a TrayApp and initialize the tray icon and menu.
 
         :param app: The Qt application instance.
-        :param read_callback: Callable invoked when the user selects the read action.
         """
         self.app = app
 
@@ -29,24 +27,25 @@ class TrayApp:
             raise RuntimeError("The system tray is not available on this system.")
 
         self.tray = QSystemTrayIcon()
-        self.tray.setIcon(QIcon("icon.png"))  # replace with your icon file
+        self.tray.setIcon(QIcon("icon.ico"))  # replace with your icon file
         self.tray.setToolTip("Compagnon Jean-Claude")
 
-        menu = QMenu()
+        self.menu = QMenu()
 
-        open_action = QAction("Lire", menu)
-        open_action.triggered.connect(read_callback)
-
-        quit_action = QAction("Quitter", menu)
+        quit_action = QAction("Quitter", self.menu)
         quit_action.triggered.connect(self.app.quit)
 
-        menu.addAction(open_action)
-        menu.addSeparator()
-        menu.addAction(quit_action)
+        self.end_separator = self.menu.addSeparator()
+        self.menu.addAction(quit_action)
 
-        self.tray.setContextMenu(menu)
+        self.tray.setContextMenu(self.menu)
         self.tray.activated.connect(self.on_tray_activated)
         self.tray.show()
+
+    def add_action(self, name: str, action: Callable[[], None]):
+        qaction = QAction(name)
+        qaction.triggered.connect(action)
+        self.menu.insertAction(self.end_separator, qaction)
 
     def on_tray_activated(self, reason):
         """

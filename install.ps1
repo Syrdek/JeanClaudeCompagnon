@@ -43,7 +43,7 @@ function Get-PyTorchIndexUrl {
         return $null
     }
 
-    # Mapping basé sur les index CUDA publiés par PyTorch
+    # Mapping base sur les index CUDA publies par PyTorch
     $majorMinor = $CudaVersion
 
     switch -Regex ($majorMinor) {
@@ -73,14 +73,14 @@ function Test-Python312Installed {
 }
 
 function Install-Python312 {
-    Write-Step "Vérification de Python 3.12"
+    Write-Step "Verification de Python 3.12"
 
     if (Test-Python312Installed) {
-        Write-Host "Python 3.12 est déjà installé."
+        Write-Host "Python 3.12 est deja installe."
         return
     }
 
-    Write-Host "Python 3.12 non détecté. Installation en cours..."
+    Write-Host "Python 3.12 non detecte. Installation en cours..."
 
     $winget = Get-Command winget -ErrorAction SilentlyContinue
     if (-not $winget) {
@@ -90,10 +90,10 @@ function Install-Python312 {
     & winget install -e --id Python.Python.3.12 --accept-package-agreements --accept-source-agreements
 
     if (-not (Test-Python312Installed)) {
-        throw "Python 3.12 n'a pas été détecté après l'installation."
+        throw "Python 3.12 n'a pas ete detecte apres l'installation."
     }
 
-    Write-Host "Python 3.12 installé avec succès."
+    Write-Host "Python 3.12 installe avec succes."
 }
 
 function New-StartupShortcut {
@@ -140,19 +140,19 @@ function Ask-YesNo {
             'n' { return $false }
             'non' { return $false }
             'no' { return $false }
-            default { Write-Host "Réponse invalide. Merci de répondre par O ou N." -ForegroundColor Yellow }
+            default { Write-Host "Reponse invalide. Merci de repondre par O ou N." -ForegroundColor Yellow }
         }
     }
 }
 
 Install-Python312
 
-Write-Step "Vérification / création du virtualenv"
+Write-Step "Verification / creation du virtualenv"
 if (-not (Test-Path ".venv")) {
-    Write-Host "Création de .venv..."
+    Write-Host "Creation de .venv..."
     py -3.12 -m venv .venv
 } else {
-    Write-Host ".venv existe déjà."
+    Write-Host ".venv existe deja."
 }
 
 Write-Step "Activation du virtualenv"
@@ -162,15 +162,15 @@ if (-not (Test-Path $activateScript)) {
 }
 . $activateScript
 
-Write-Step "Mise à jour de pip"
+Write-Step "Mise a jour de pip"
 python -m pip install --upgrade pip
 
-Write-Step "Détection de CUDA"
+Write-Step "Detection de CUDA"
 $cudaVersion = Get-CudaVersion
 if ($cudaVersion) {
-    Write-Host "CUDA détecté: $cudaVersion"
+    Write-Host "CUDA detecte: $cudaVersion"
 } else {
-    Write-Host "CUDA non détecté. Installation de la version par défaut de torch/torchvision."
+    Write-Host "CUDA non detecte. Installation de la version par defaut de torch/torchvision."
 }
 
 Write-Step "Installation de torch / torchvision"
@@ -180,26 +180,26 @@ if ($torchIndexUrl) {
     Write-Host "Utilisation de l'index PyTorch: $torchIndexUrl"
     python -m pip install torch torchvision --index-url $torchIndexUrl
 } else {
-    Write-Host "Aucun index CUDA compatible trouvé, installation par défaut."
+    Write-Host "Aucun index CUDA compatible trouve, installation par defaut."
     python -m pip install torch torchvision
 }
 
-Write-Step "Installation des dépendances requirements.txt"
+Write-Step "Installation des dependances requirements.txt"
 if (Test-Path "requirements.txt") {
     python -m pip install -r requirements.txt
 } else {
-    Write-Host "requirements.txt introuvable, étape ignorée." -ForegroundColor Yellow
+    Write-Host "requirements.txt introuvable, etape ignoree." -ForegroundColor Yellow
 }
 
-Write-Step "Création du dossier models"
+Write-Step "Creation du dossier models"
 if (-not (Test-Path "models")) {
     New-Item -ItemType Directory -Path "models" | Out-Null
-    Write-Host "Dossier models créé."
+    Write-Host "Dossier models cree."
 } else {
-    Write-Host "Le dossier models existe déjà."
+    Write-Host "Le dossier models existe deja."
 }
 
-Write-Step "Configuration du lancement automatique au démarrage de session"
+Write-Step "Configuration du lancement automatique au demarrage de session"
 $startupFolder = [Environment]::GetFolderPath("Startup")
 $runScriptPath = Join-Path $PSScriptRoot "run.ps1"
 $shortcutPath = Join-Path $startupFolder "JeanClaudeCompagnon.lnk"
@@ -214,7 +214,7 @@ $enableStartup = Ask-YesNo "Souhaitez-vous lancer l'application automatiquement 
 if ($enableStartup) {
     if (Test-Path $legacyBatPath) {
         Remove-Item $legacyBatPath -Force
-        Write-Host "Ancien fichier .bat supprimé: $legacyBatPath"
+        Write-Host "Ancien fichier .bat supprime: $legacyBatPath"
     }
 
     New-StartupShortcut -ShortcutPath $shortcutPath -RunScriptPath $runScriptPath -WorkingDirectory $PSScriptRoot
@@ -222,16 +222,16 @@ if ($enableStartup) {
 } else {
     if (Test-Path $shortcutPath) {
         Remove-Item $shortcutPath -Force
-        Write-Host "Raccourci de démarrage supprimé: $shortcutPath"
+        Write-Host "Raccourci de demarrage supprime: $shortcutPath"
     } else {
-        Write-Host "Aucun raccourci de démarrage créé."
+        Write-Host "Aucun raccourci de demarrage cree."
     }
 
     if (Test-Path $legacyBatPath) {
         Remove-Item $legacyBatPath -Force
-        Write-Host "Ancien fichier .bat supprimé: $legacyBatPath"
+        Write-Host "Ancien fichier .bat supprime: $legacyBatPath"
     }
 }
 
-Write-Step "Terminé"
-Write-Host "Environnement prêt."
+Write-Step "Termine"
+Write-Host "Environnement pret."

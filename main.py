@@ -5,8 +5,11 @@ import sys
 from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
 
 from server.http_server import HttpServer
+from ui.area_overlay import AreaSelectionOverlayBridge
+from ui.processing_overlay import ProcessingOverlayBridge
 from util.config import Config
 from core.audio_chat import AudioChat
 from core.screen_reader import ScreenReader
@@ -19,9 +22,6 @@ from services.screener import Screener
 from services.speaker import TextReader, TTS
 from services.transcriber import Transcriber
 from services.translator import Translator
-
-from ui.area_bridge import AreaSelectionOverlayBridge
-from ui.processing_bridge import ProcessingOverlayBridge
 from ui.tray import TrayApp
 
 logger = logging.getLogger("main")
@@ -33,8 +33,11 @@ def main():
     """
     logger.info("Creating application")
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon("icon.ico"))
     # Keep the application alive even when all windows are closed (e.g., system tray).
     app.setQuitOnLastWindowClosed(False)
+
+    tray_app = TrayApp(app=app)
 
     # Initialize all services from configuration.
     screener = Screener.from_config(config.get("screener"))
@@ -78,7 +81,8 @@ def main():
     hook.start()
 
     # System tray integration with area_bridge.show as the activation callback.
-    tray_app = TrayApp(app=app, read_callback=area_bridge.show)
+    tray_app.add_action("Lire", area_bridge.show)
+    tray_app.add_action("Discuter", audio_chat.switch)
 
     # Exposes services if enabled.
     if config("expose", "enabled", default=False):
@@ -137,7 +141,7 @@ def create_input_listener() -> InputHook:
 
 
 if __name__ == '__main__':
-    config_path = Path(__file__).with_name("logging.json")
+    config_path = Path.cwd() / "logging.json"
 
     with config_path.open("r", encoding="utf-8") as f:
         config = json.load(f)

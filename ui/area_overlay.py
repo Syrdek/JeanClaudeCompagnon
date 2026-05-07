@@ -1,10 +1,16 @@
+import logging
 import sys
+from typing import Tuple
 
 from PySide6.QtGui import QMouseEvent, QKeyEvent, QPaintEvent, QIcon
-from PySide6.QtCore import Qt, QRect, QPoint
+from PySide6.QtCore import Qt, QRect, QPoint, QObject, Signal
 from PySide6.QtGui import QPainter, QColor, QPen, QPainterPath
 from PySide6.QtWidgets import QApplication, QWidget
 
+from core.screen_reader import ScreenReader
+from input.hook import InputHook
+
+logger = logging.getLogger("ui.area")
 
 class AreaSelectionOverlay(QWidget):
     """
@@ -46,7 +52,7 @@ class AreaSelectionOverlay(QWidget):
         # Use a cross cursor for precise selection
         self.setCursor(Qt.CrossCursor)
 
-        self.setWindowIcon(QIcon("icon.png"))
+        self.setWindowIcon(QIcon("icon.ico"))
 
     def on_cancel(self) -> None:
         """
@@ -148,6 +154,58 @@ class AreaSelectionOverlay(QWidget):
         # Paints the selection.
         painter.setPen(QPen(QColor(0, 0, 0, 100), 1))
         painter.drawRect(selection_rect)
+
+
+
+
+class AreaSelectionOverlayBridge(QObject):
+    """
+    Bridges the Qt area selection overlay with the screen reader.
+    """
+    __open_signal = Signal()
+    __overlay: AreaSelectionOverlay | None = None
+    __start_pos: Tuple[int, int] | None = None
+
+    def __init__(self, reader: ScreenReader, hook: InputHook):
+        """
+        Construct an AreaSelectionOverlayBridge.
+
+        :param reader: The screenshot reader utility.
+        :param hook: The hook to use to collect mouse positions.
+        """
+        super().__init__()
+        self.reader = reader
+        self.hook = hook
+        self.__start_pos = None
+        self.__overlay = None
+        self.__open_signal.connect(self.show)
+
+    def show(self, *args) -> None:
+        """
+        Displays the Qt area selection overlay.
+        """
+        logger.info("Showing area selection overlay...")
+        if self.__overlay is not None:
+            self.__overlay.close()
+            self.__overlay = None
+
+        def capture_starting_pos(*args):
+            self.__start_pos = self.hook.mouse_pos
+
+        def capture_ending_pos(*args):
+            self.reader.read_screen(self.__start_pos, self.hook.mouse_pos)
+
+        self.__overlay = AreaSelectionOverlay()
+        self.__overlay.on_start_dragging = capture_starting_pos
+        self.__overlay.on_accept = capture_ending_pos
+        self.__overlay.show()
+
+    def show_overlay(self, *args):
+        """
+        Display the overlay on the screen.
+        :param args: Any arguments (ignored).
+        """
+        self.__open_signal.emit()
 
 
 

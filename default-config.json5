@@ -11,19 +11,29 @@
 
   "ocr": {
     // OCR configuration to extract text from the screen.
+
+    // Use exposed service
+    "type": "remote",
+    "url": "http://localhost:11111/ocr",
+
+
+    /* Or use a local one
     "type": "easyocr",
     "download": true,
     "model_path": "models/easy_ocr",
     "langs": ["fr", "en"],
-
-    /* Alternative : using a remote OCR
-    "type": "remote",
-    "url": "http://localhost:11111/ocr",
     */
   },
 
   "tts": {
     // TTS is the tool that transforms text to audio data.
+
+    // Use exposed service
+    "type": "remote",
+    "url": "http://localhost:11111/tts",
+
+
+    /* Or use a local one
     "type": "omnivoice",
     "model_path": "models/OmniVoice",
     "ref_voice_path": null,
@@ -31,10 +41,6 @@
     "repo_id": "k2-fsa/OmniVoice",
     "device": "auto",
     "download": true
-
-    /* Alternative : using a remote TTS
-    "type": "remote",
-    "url": "http://localhost:11111/tts",
     */
   },
 
@@ -78,7 +84,8 @@ Voici le texte à traduire : ``` \
     "system-prompt": "Tu es un assistant nommé Jean-Claude. \
 Les questions qui te sont fournies proviennent de textes extraits par OCR ou via un outil de Speech-to-text, dont la qualité est parfois variable. \
 Si le texte te semble incohérent, essaie de trouver comment le corriger. \
-Réponds toujours à la dernière demande formulée, en t'appuyant si nécessaire sur les informations provenant de l'historique qui t'es fourni.",
+Réponds toujours à la dernière demande formulée, en t'appuyant si nécessaire sur les informations provenant de l'historique qui t'es fourni.\
+La réponse doit être exempte de syntaxe markdown, car elle est destinée à être lue à l'utilisateur via un Text-to-speach omnivoice",
     // Keeps history size controlled in case of per-token prices.
     "max-history": 5
   },
@@ -94,16 +101,19 @@ Réponds toujours à la dernière demande formulée, en t'appuyant si nécessair
 
   "stt": {
     // How user voice is converted to text.
+
+    // Use exposed service
+    "type": "remote",
+    "url": "http://localhost:11111/stt",
+
+    // Or use a local one
+    /*
     "type": "faster-whisper",
     "model": "small",
     "model_path": "models/faster-whisper",
     "device": "auto",
     "compute_type": "int8",
     "download": true
-
-    /* Alternative : using a remote STT
-    "type": "remote",
-    "url": "http://localhost:11111/stt",
     */
   },
 
