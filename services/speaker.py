@@ -8,7 +8,6 @@ from typing import Tuple, List
 import numpy as np
 import sounddevice
 import torch
-from omnivoice import OmniVoice
 
 import util.convertion
 from util.config import Config
@@ -81,6 +80,7 @@ class OmnivoiceTTS(TTS):
         else:
             self.device = device
 
+        from omnivoice import OmniVoice
         self.model = OmniVoice.from_pretrained(
             model_path,
             device_map=self.device,

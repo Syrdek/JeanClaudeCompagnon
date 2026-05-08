@@ -140,8 +140,8 @@ La réponse doit être exempte de syntaxe markdown, car elle est destinée à ê
   "expose": {
     // You can expose sevices to a computer to another if, like me, the computer you need this tool is unable to run
     // the OCR, speech-to-text or text-to-speech utilities in reasonable delays.
-    "enabled": false,
-    "host": "0.0.0.0",
+    "enabled": true,
+    "host": "127.0.0.1",
     "port": "11111",
 
     "services": {

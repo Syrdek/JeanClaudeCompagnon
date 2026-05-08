@@ -1,5 +1,6 @@
 import logging
 import os.path
+import re
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Tuple, NoReturn
 
@@ -63,6 +64,10 @@ class ScreenReader(object):
             texts = self.ocr.read(img)
 
             text = "\n\n".join([text.rstrip(" .") + "." for box, text in texts])
+            if not re.match("[a-zA-Z]", text.strip()):
+                logger.info(f"No text found in :{text}")
+                self.overlay.close()
+
 
             logger.info(f"Text extracted : {text}")
             need_translate = not self.detector.is_target(text)

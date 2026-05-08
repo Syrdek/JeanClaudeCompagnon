@@ -5,8 +5,6 @@ from typing import Optional, Dict, Any
 
 import numpy
 import torch
-from faster_whisper import WhisperModel, decode_audio
-from scipy.io.wavfile import read
 
 import util.convertion
 from util.config import Config
@@ -67,6 +65,8 @@ class FasterWhisperTranscriber(Transcriber):
             self.device = device
 
         self.model_dir.mkdir(parents=True, exist_ok=True)
+
+        from faster_whisper import WhisperModel
         self._model = WhisperModel(
             self.model_name,
             device=self.device,
@@ -158,6 +158,7 @@ class RemoteTranscriber(MultipleUrlRemote, Transcriber):
                    audio: str | numpy.ndarray,
                    language: Optional[str] = None) -> Dict[str, Any]:
         if not isinstance(audio, numpy.ndarray):
+            from faster_whisper import decode_audio
             audio = decode_audio(audio)
 
         params: Dict[str, Any] = {
