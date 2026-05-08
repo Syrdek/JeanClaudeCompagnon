@@ -147,7 +147,6 @@ if __name__ == '__main__':
         config = json.load(f)
 
     logging.config.dictConfig(config)
-    logging.getLogger("argostranslate.utils").setLevel(logging.WARNING)
 
     config = Config()
 

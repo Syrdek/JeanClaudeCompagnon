@@ -67,38 +67,42 @@ class AudioChat(object):
         """
         Stop recording, then transcribe, query the LLM, and play the response.
         """
-        logger.info("Stop recording")
-        with self._lock:
-            if not self.recording:
+        try:
+            logger.info("Stop recording")
+            with self._lock:
+                if not self.recording:
+                    return
+
+                self.recording = False
+
+            logger.info(f"Stop recording...")
+            audio_array = self.recorder.stop()
+            if os.path.isdir("tests"):
+                self.recorder.save("tests/audio.wav", audio_array)
+
+            if cancel:
+                logger.info(f"Operation was cancelled")
+                self.overlay.close()
                 return
 
-            self.recording = False
+            self.overlay.load()
 
-        logger.info(f"Stop recording...")
-        audio_array = self.recorder.stop()
-        if os.path.isdir("tests"):
-            self.recorder.save("tests/audio.wav", audio_array)
+            logger.info(f"Transcribing...")
+            text = self.stt.transcribe(audio_array)["text"]
 
-        if cancel:
-            logger.info(f"Operation was cancelled")
+            if text:
+                logger.info(f"Asking LLM : {text}...")
+                response = self.llm.request(message=text)
+
+                logger.info(f"Generating samples for response: {response.message.content}...")
+                audio, rate = self.speaker.generate(response.message.content)
+
+                logger.info(f"Playing samples...")
+                self.overlay.play()
+                self.speaker.play(samples=audio, rate=rate, wait=True)
+            else:
+                logger.info(f"No text was transcribed")
+        except:
+            logger.exception("Error occured !")
+        finally:
             self.overlay.close()
-            return
-
-        self.overlay.load()
-
-        logger.info(f"Transcribing...")
-        text = self.stt.transcribe(audio_array)["text"]
-
-        if text:
-            logger.info(f"Asking LLM : {text}...")
-            response = self.llm.request(message=text)
-
-            logger.info(f"Generating samples for response: {response.message.content}...")
-            audio, rate = self.speaker.generate(response.message.content)
-
-            logger.info(f"Playing samples...")
-            self.overlay.play()
-            self.speaker.play(samples=audio, rate=rate, wait=True)
-            self.overlay.close()
-        else:
-            logger.info(f"No text was transcribed")

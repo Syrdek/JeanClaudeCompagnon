@@ -44,7 +44,7 @@ class ScreenReader(object):
         self.speaker = speaker
         self.ocr = ocr
 
-    def __read_screen_task(self, from_point: Tuple[int, int], to_point: Tuple[int, int]) -> NoReturn:
+    def __read_screen_task(self, from_point: Tuple[int, int], to_point: Tuple[int, int]) -> None:
         """
         Background task that captures a screen region, extracts text via OCR,
         translates it to French, and reads it aloud.
@@ -66,8 +66,7 @@ class ScreenReader(object):
             text = "\n\n".join([text.rstrip(" .") + "." for box, text in texts])
             if not re.match("[a-zA-Z]", text.strip()):
                 logger.info(f"No text found in :{text}")
-                self.overlay.close()
-
+                return
 
             logger.info(f"Text extracted : {text}")
             need_translate = not self.detector.is_target(text)
@@ -81,11 +80,11 @@ class ScreenReader(object):
             logger.info(f"Playing samples...")
             self.overlay.play()
             self.speaker.play(samples=audio, rate=rate, wait=True)
-
-            self.overlay.close()
             logger.info(f"Finished !")
         except:
             logger.exception("Error occured !")
+        finally:
+            self.overlay.close()
 
     def read_screen(self, from_point: Tuple[int, int], to_point: Tuple[int, int]) -> NoReturn:
         """

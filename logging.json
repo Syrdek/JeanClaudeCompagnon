@@ -10,7 +10,7 @@
   "handlers": {
     "console": {
       "class": "logging.StreamHandler",
-      "level": "INFO",
+      "level": "DEBUG",
       "formatter": "standard",
       "stream": "ext://sys.stdout"
     },
@@ -23,8 +23,19 @@
       "encoding": "utf-8"
     }
   },
+  "loggers": {
+    "argostranslate.utils": {
+      "level": "WARNING"
+    },
+    "input.listener": {
+      "level": "INFO"
+    }
+  },
   "root": {
     "level": "INFO",
-    "handlers": ["console", "file"]
+    "handlers": [
+      "console",
+      "file"
+    ]
   }
 }
