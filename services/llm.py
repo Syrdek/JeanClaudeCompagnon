@@ -1,4 +1,5 @@
 import abc
+import json
 import logging
 from typing import List, Dict, Any, Iterator
 
@@ -110,13 +111,15 @@ class OllamaClient(LlmClient):
 
         history = self.history
         if self.max_history and len(history) > self.max_history:
-            history = history[: self.max_history]
+            history = history[-self.max_history:]
 
         if self.system_prompt is not None:
             history = [{
                 "role": "system",
                 "content": self.system_prompt,
             }] + history
+
+        logging.info(json.dumps(history, indent=4))
 
         response = self.client.chat(model=model, messages=history, **kwargs)
         response_message = response.message

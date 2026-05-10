@@ -59,7 +59,7 @@ class AudioChat(object):
                 return
 
             self.recording = True
-            self.controller.wait()
+            self.controller.wait.emit()
             self.recorder.start()
 
     def stop_recording(self, cancel: bool = False):
@@ -74,17 +74,16 @@ class AudioChat(object):
 
                 self.recording = False
 
-            logger.info(f"Stop recording...")
             audio_array = self.recorder.stop()
             if os.path.isdir("tests"):
                 self.recorder.save("tests/audio.wav", audio_array)
 
             if cancel:
                 logger.info(f"Operation was cancelled")
-                self.controller.close_processing_indicator()
+                self.controller.close.emit()
                 return
 
-            self.controller.load()
+            self.controller.load.emit()
 
             logger.info(f"Transcribing...")
             text = self.stt.transcribe(audio_array)["text"]
@@ -97,11 +96,11 @@ class AudioChat(object):
                 audio, rate = self.speaker.generate(response.message.content)
 
                 logger.info(f"Playing samples...")
-                self.controller.play()
+                self.controller.play.emit()
                 self.speaker.play(samples=audio, rate=rate, wait=True)
             else:
                 logger.info(f"No text was transcribed")
         except:
             logger.exception("Error occured !")
         finally:
-            self.controller.close_processing_indicator()
+            self.controller.close.emit()

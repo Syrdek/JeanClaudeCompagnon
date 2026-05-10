@@ -114,6 +114,7 @@ class GuiController(QObject):
             self.processing_overlay = ProcessingOverlay(width=self.processing_width,
                                                         height=self.processing_height,
                                                         bar_color=self.bar_color)
+            self.processing_overlay.show()
 
         if animation == "load":
             self.processing_overlay.set_loading()
@@ -122,10 +123,11 @@ class GuiController(QObject):
         else:
             self.processing_overlay.set_playing()
 
-        self.processing_overlay.show()
 
     @Slot()
     def __close_processing_indicator(self):
         logger.info("Closing processing indicator")
         if self.processing_overlay:
-            self.processing_overlay.hide()
+            self.processing_overlay.close()
+            self.processing_overlay.deleteLater()
+            self.processing_overlay = None
