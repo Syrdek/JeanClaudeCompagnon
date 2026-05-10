@@ -1,6 +1,7 @@
 import sys
 from typing import Callable
 
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -43,9 +44,10 @@ class TrayApp:
         self.tray.show()
 
     def add_action(self, name: str, action: Callable[[], None]):
-        qaction = QAction(name)
-        qaction.triggered.connect(action)
-        self.menu.insertAction(self.end_separator, qaction)
+        q_action = QAction(name)
+        q_action.triggered.connect(action)
+        self.menu.insertAction(self.end_separator, q_action)
+        return q_action.triggered
 
     def on_tray_activated(self, reason):
         """

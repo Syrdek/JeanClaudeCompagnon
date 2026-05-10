@@ -5,7 +5,7 @@ from threading import RLock
 from typing import Literal, Callable
 
 from PySide6.QtGui import QPaintEvent, QIcon, QKeyEvent
-from PySide6.QtCore import Qt, QTimer, Signal, QObject
+from PySide6.QtCore import Qt, QTimer, Signal, QObject, Slot
 from PySide6.QtGui import QPainter, QColor
 from PySide6.QtWidgets import QApplication, QWidget
 
@@ -83,18 +83,21 @@ class ProcessingOverlay(QWidget):
         self.setWindowIcon(QIcon("icon.ico"))
         self.set_waiting()
 
+    @Slot()
     def set_loading(self):
         """
         Set the overlay animation to loading mode.
         """
         self.paintAnimation = self.__paint_comet
 
+    @Slot()
     def set_waiting(self):
         """
         Set the overlay animation to waiting mode.
         """
         self.paintAnimation = self.__paint_pulse
 
+    @Slot()
     def set_playing(self):
         """
         Set the overlay animation to playing mode.
@@ -339,100 +342,6 @@ class ProcessingOverlay(QWidget):
             )
 
         painter.end()
-
-
-
-class ProcessingOverlayBridge(QObject):
-    """
-    Links the Qt application with python script.
-    """
-    __lock = RLock()
-    __wait_signal = Signal()
-    __load_signal = Signal()
-    __play_signal = Signal()
-    __close_signal = Signal()
-    __overlay: ProcessingOverlay | None = None
-
-    def __init__(self, **kwargs):
-        """
-        Construct a ProcessingOverlayBridge.
-        """
-        super().__init__()
-        self.__overlay = None
-        self.__wait_signal.connect(self.__qt_wait)
-        self.__load_signal.connect(self.__qt_load)
-        self.__play_signal.connect(self.__qt_play)
-        self.__close_signal.connect(self.__qt_close)
-        self.overlay_kwargs = kwargs
-
-    def __ensure_overlay(self) -> ProcessingOverlay:
-        """
-        Ensures the overlay is set up.
-        :return: The overlay.
-        """
-        with self.__lock:
-            if self.__overlay is None:
-                self.__overlay = ProcessingOverlay(**self.overlay_kwargs)
-                self.__overlay.show()
-            return self.__overlay
-
-    def __qt_wait(self) -> None:
-        """
-        Set the overlay to wait mode on the Qt thread.
-        """
-        logger.info("Setting processing overlay to wait...")
-        self.__ensure_overlay().set_waiting()
-
-    def __qt_load(self) -> None:
-        """
-        Set the overlay to loading mode on the Qt thread.
-        """
-        logger.info("Setting processing overlay to load...")
-        self.__ensure_overlay().set_loading()
-
-    def __qt_play(self) -> None:
-        """
-        Set the overlay to play mode on the Qt thread.
-        """
-        logger.info("Setting processing overlay to play...")
-        self.__ensure_overlay().set_playing()
-
-    def __qt_close(self) -> None:
-        """
-        Close the overlay on the Qt thread.
-        """
-        logger.info("Closing processing overlay...")
-        if self.__overlay is not None:
-            self.__overlay.close()
-            self.__overlay = None
-
-    def wait(self, *args):
-        """
-        Display the overlay on the screen in wait mode.
-        :param args: Any arguments (ignored).
-        """
-        self.__wait_signal.emit()
-
-    def load(self, *args):
-        """
-        Display the overlay on the screen in load mode.
-        :param args: Any arguments (ignored).
-        """
-        self.__load_signal.emit()
-
-    def play(self, *args):
-        """
-        Display the overlay on the screen in play mode.
-        :param args: Any arguments (ignored).
-        """
-        self.__play_signal.emit()
-
-    def close(self, *args):
-        """
-        Closes the overlay.
-        :param args: Any arguments (ignored).
-        """
-        self.__close_signal.emit()
 
 
 if __name__ == "__main__":

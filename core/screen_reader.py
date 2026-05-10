@@ -10,11 +10,9 @@ from services.screener import Screener
 from services.speaker import TextReader
 
 from services.translator import Translator
-from ui.processing_overlay import ProcessingOverlayBridge
+from ui.controller import GuiController
 
 logger = logging.getLogger("screen_reader")
-
-pool = ThreadPoolExecutor()
 
 class ScreenReader(object):
     """
@@ -26,8 +24,9 @@ class ScreenReader(object):
     :param ocr: Optical character recognition engine.
     :param translator: Language translator.
     """
+    HAS_TEXT_REGEX = re.compile("[a-z]+", re.IGNORECASE)
 
-    def __init__(self, screener: Screener, speaker: TextReader, ocr: Ocr, detector: Detector, translator: Translator, overlay: ProcessingOverlayBridge):
+    def __init__(self, screener: Screener, speaker: TextReader, ocr: Ocr, detector: Detector, translator: Translator):
         """
         Construct a ScreenReader.
 
@@ -37,7 +36,7 @@ class ScreenReader(object):
         :param detector: Language detector.
         :param translator: Language translator.
         """
-        self.overlay = overlay
+        self.controller = GuiController()
         self.translator = translator
         self.detector = detector
         self.screener = screener
@@ -53,7 +52,7 @@ class ScreenReader(object):
         :param to_point: Bottom-right corner of the region to capture.
         """
         try:
-            self.overlay.load()
+            self.controller.load.emit()
 
             logger.info("Reading screen...")
             img = self.screener.screenshot(from_point, to_point)
@@ -64,7 +63,7 @@ class ScreenReader(object):
             texts = self.ocr.read(img)
 
             text = "\n\n".join([text.rstrip(" .") + "." for box, text in texts])
-            if not re.match("[a-zA-Z]", text.strip()):
+            if not self.HAS_TEXT_REGEX.search(text.strip()):
                 logger.info(f"No text found in :{text}")
                 return
 
@@ -78,15 +77,15 @@ class ScreenReader(object):
             audio, rate = self.speaker.generate(text)
 
             logger.info(f"Playing samples...")
-            self.overlay.play()
+            self.controller.play.emit()
             self.speaker.play(samples=audio, rate=rate, wait=True)
             logger.info(f"Finished !")
         except:
             logger.exception("Error occured !")
         finally:
-            self.overlay.close()
+            self.controller.close.emit()
 
-    def read_screen(self, from_point: Tuple[int, int], to_point: Tuple[int, int]) -> NoReturn:
+    def read_screen(self, from_point: Tuple[int, int], to_point: Tuple[int, int]) -> None:
         """
         Submit a screen-reading task to the thread pool for asynchronous execution.
 
@@ -94,4 +93,4 @@ class ScreenReader(object):
         :param to_point: Bottom-right corner of the region to capture.
         """
         logger.info(f"Captured fragment : {from_point}, {to_point}")
-        pool.submit(self.__read_screen_task, from_point, to_point)
+        self.__read_screen_task(from_point, to_point)

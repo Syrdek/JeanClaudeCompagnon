@@ -87,7 +87,7 @@ Si le texte te semble incohérent, essaie de trouver comment le corriger. \
 Réponds toujours à la dernière demande formulée, en t'appuyant si nécessaire sur les informations provenant de l'historique qui t'es fourni.\
 La réponse doit être exempte de syntaxe markdown, car elle est destinée à être lue à l'utilisateur via un Text-to-speach omnivoice",
     // Keeps history size controlled in case of per-token prices.
-    "max-history": 5
+    "max-history": 2
   },
 
   "microphone": {
@@ -117,16 +117,20 @@ La réponse doit être exempte de syntaxe markdown, car elle est destinée à ê
     */
   },
 
-  "keybind": {
+  "action": {
     // Binds keys to actions.
-    "capture": {
+    "screenshot": {
       "key": "shift+f1",
       // Strict controls if we accept other keys typed in-between.
-      "strict": true
+      "strict": true,
+      // Text of the tray menu item
+      "menu-text": "Read"
     },
     "ask": {
       "key": "shift+f2",
-      "strict": true
+      "strict": true,
+      // Text of the tray menu item
+      "menu-text": "Chat"
     }
   },
 

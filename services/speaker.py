@@ -109,6 +109,8 @@ class OmnivoiceTTS(TTS):
             text=text,
             ref_audio=self.ref_voice_path,
             ref_text=self.ref_voice_text,
+            speed=1.0,
+            num_step=32
         )
         return audio[0], 24000
 

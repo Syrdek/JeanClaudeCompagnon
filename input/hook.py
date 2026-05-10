@@ -19,10 +19,11 @@ from pynput import keyboard, mouse
 from pynput.keyboard import  KeyCode
 
 from input.listener import InputListener, CombinationListener, combination_from_str
+from util.decorator import singleton
 
 logger = logging.getLogger("input.hook")
 
-
+@singleton
 class InputHook(object):
     """
     Captures keyboard and mouse events.
@@ -37,8 +38,11 @@ class InputHook(object):
     listeners: List[InputListener] = []
     key_listener: keyboard.Listener = None
     mouse_listener: mouse.Listener = None
+    thread: threading.Thread = None
+    running: bool = False
+    __lock = threading.RLock()
 
-    def __init__(self):
+    def __init__(self, start: bool = True):
         """
         Construct an InputHook. Initializes internal state.
         """
@@ -46,12 +50,22 @@ class InputHook(object):
         self.press_start = None
         self.last_region = None
         self.is_pressing = False
+        self.running = False
         self.listeners = []
+        self.thread = None
+        if start:
+            self.start()
 
     def run(self):
         """
         Run the keyboard and mouse event capture loop, and blocs until the end.
         """
+        with self.__lock:
+            if self.running:
+                return
+            self.running = True
+
+        logger.info("Initializing InputHook...")
         with keyboard.Listener(on_press=self._on_press, on_release=self._on_release, suppress=False) as key_listener, \
                 mouse.Listener(on_move=self._on_move, suppress=False) as mouse_listener:
             self.mouse_listener = mouse_listener
@@ -68,10 +82,11 @@ class InputHook(object):
 
         :return: The thread running the capture loop.
         """
-        thread = threading.Thread(target=self.run)
-        thread.daemon = True
-        thread.start()
-        return thread
+        if not self.thread:
+            self.thread = threading.Thread(target=self.run)
+            self.thread.daemon = True
+            self.thread.start()
+        return self.thread
 
     def _on_press(self, key: KeyCode):
         """

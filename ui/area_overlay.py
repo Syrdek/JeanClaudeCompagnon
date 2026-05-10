@@ -7,7 +7,6 @@ from PySide6.QtCore import Qt, QRect, QPoint, QObject, Signal
 from PySide6.QtGui import QPainter, QColor, QPen, QPainterPath
 from PySide6.QtWidgets import QApplication, QWidget
 
-from core.screen_reader import ScreenReader
 from input.hook import InputHook
 
 logger = logging.getLogger("ui.area")
@@ -24,6 +23,12 @@ class AreaSelectionOverlay(QWidget):
 
     # Tells if a selection is occurring
     selecting: bool
+
+    # Absolute positions
+    absolute_start: tuple[int, int]
+    absolute_end: tuple[int, int]
+
+    area_selected: Signal = Signal(tuple, tuple)
 
 
     def __init__(self):
@@ -54,26 +59,8 @@ class AreaSelectionOverlay(QWidget):
 
         self.setWindowIcon(QIcon("icon.ico"))
 
-    def on_cancel(self) -> None:
-        """
-        Called when selection is cancelled.
-        """
-
-    def on_accept(self, x: int, y: int, width: int, height: int) -> None:
-        """
-        Called when selection is accepted.
-        :param x: The x position of the selection.
-        :param y: The y position of the selection.
-        :param width: The width of the selection.
-        :param height: The height of the selection.
-        """
-
-    def on_start_dragging(self, x: int, y: int):
-        """
-        Called when selection starts.
-        :param x: The x position of the selection.
-        :param y: The y position of the selection.
-        """
+        self.input_hook = InputHook()
+        self.input_hook.start()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """
@@ -82,12 +69,10 @@ class AreaSelectionOverlay(QWidget):
         """
         if event.button() == Qt.LeftButton:
             self.start = event.position().toPoint()
+            self.absolute_start = self.input_hook.mouse_pos
             self.end = self.start
             self.selecting = True
             self.update()
-
-            # Triggers event
-            self.on_start_dragging(event.x(), event.y())
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         """
@@ -105,12 +90,11 @@ class AreaSelectionOverlay(QWidget):
         """
         if event.button() == Qt.LeftButton:
             self.end = event.position().toPoint()
+            self.absolute_end = self.input_hook.mouse_pos
             self.selecting = False
 
-            rect = QRect(self.start, self.end).normalized()
-
             # Triggers event
-            self.on_accept(rect.x(), rect.y(), rect.width(), rect.height())
+            self.area_selected.emit(self.absolute_start, self.absolute_end)
 
             self.close()
 
@@ -156,64 +140,12 @@ class AreaSelectionOverlay(QWidget):
         painter.drawRect(selection_rect)
 
 
-
-
-class AreaSelectionOverlayBridge(QObject):
-    """
-    Bridges the Qt area selection overlay with the screen reader.
-    """
-    __open_signal = Signal()
-    __overlay: AreaSelectionOverlay | None = None
-    __start_pos: Tuple[int, int] | None = None
-
-    def __init__(self, reader: ScreenReader, hook: InputHook):
-        """
-        Construct an AreaSelectionOverlayBridge.
-
-        :param reader: The screenshot reader utility.
-        :param hook: The hook to use to collect mouse positions.
-        """
-        super().__init__()
-        self.reader = reader
-        self.hook = hook
-        self.__start_pos = None
-        self.__overlay = None
-        self.__open_signal.connect(self.show)
-
-    def show(self, *args) -> None:
-        """
-        Displays the Qt area selection overlay.
-        """
-        logger.info("Showing area selection overlay...")
-        if self.__overlay is not None:
-            self.__overlay.close()
-            self.__overlay = None
-
-        def capture_starting_pos(*args):
-            self.__start_pos = self.hook.mouse_pos
-
-        def capture_ending_pos(*args):
-            self.reader.read_screen(self.__start_pos, self.hook.mouse_pos)
-
-        self.__overlay = AreaSelectionOverlay()
-        self.__overlay.on_start_dragging = capture_starting_pos
-        self.__overlay.on_accept = capture_ending_pos
-        self.__overlay.show()
-
-    def show_overlay(self, *args):
-        """
-        Display the overlay on the screen.
-        :param args: Any arguments (ignored).
-        """
-        self.__open_signal.emit()
-
-
-
 if __name__ == "__main__":
     """
     Starts a selection overlay.
     """
     app = QApplication(sys.argv)
     overlay = AreaSelectionOverlay()
+    overlay.area_selected.connect(lambda a, b: print(f"{a}, {b}"))
     overlay.show()
     sys.exit(app.exec())

@@ -6,7 +6,7 @@ from services.llm import OllamaClient, LlmClient
 from services.recorder import MicrophoneRecorder
 from services.speaker import TTS, TextReader
 from services.transcriber import FasterWhisperTranscriber
-from ui.processing_overlay import ProcessingOverlayBridge
+from ui.controller import GuiController
 
 logger = logging.getLogger("core.audio_chat")
 
@@ -16,13 +16,13 @@ class AudioChat(object):
     sends the text to an LLM, and plays back the synthesized response.
     """
     _lock = threading.RLock()
+    controller: GuiController
 
     def __init__(self,
                  recorder: MicrophoneRecorder,
                  stt: FasterWhisperTranscriber,
                  llm: LlmClient,
-                 speaker: TextReader,
-                 processing_ui: ProcessingOverlayBridge):
+                 speaker: TextReader):
         """
         Construct an AudioChat.
 
@@ -30,14 +30,13 @@ class AudioChat(object):
         :param stt: Speech-to-text transcriber.
         :param llm: LLM client for generating responses.
         :param speaker: Text-to-speech reader for audio output.
-        :param processing_ui: Processing overlay UI bridge for status feedback.
         """
         self.recorder = recorder
         self.stt = stt
         self.llm = llm
         self.speaker = speaker
-        self.overlay = processing_ui
         self.recording = False
+        self.controller = GuiController()
 
     def switch(self, *args):
         """
@@ -60,7 +59,7 @@ class AudioChat(object):
                 return
 
             self.recording = True
-            self.overlay.wait()
+            self.controller.wait()
             self.recorder.start()
 
     def stop_recording(self, cancel: bool = False):
@@ -82,10 +81,10 @@ class AudioChat(object):
 
             if cancel:
                 logger.info(f"Operation was cancelled")
-                self.overlay.close()
+                self.controller.close_processing_indicator()
                 return
 
-            self.overlay.load()
+            self.controller.load()
 
             logger.info(f"Transcribing...")
             text = self.stt.transcribe(audio_array)["text"]
@@ -98,11 +97,11 @@ class AudioChat(object):
                 audio, rate = self.speaker.generate(response.message.content)
 
                 logger.info(f"Playing samples...")
-                self.overlay.play()
+                self.controller.play()
                 self.speaker.play(samples=audio, rate=rate, wait=True)
             else:
                 logger.info(f"No text was transcribed")
         except:
             logger.exception("Error occured !")
         finally:
-            self.overlay.close()
+            self.controller.close_processing_indicator()
